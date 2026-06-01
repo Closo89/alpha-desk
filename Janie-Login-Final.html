@@ -1,0 +1,1331 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Janie Alpha Desk - Executive Terminal</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+<script>
+  tailwind.config = {
+    theme: {
+      extend: {
+        colors: {
+          executive: { 900: '#0f172a', 800: '#1e293b', 700: '#334155' },
+          gold: { 300: '#fde047', 400: '#facc15', 500: '#d4af37', 600: '#ca8a04' },
+          silver: '#f8fafc',
+          crimson: '#e11d48'
+        },
+        fontFamily: {
+          sans: ['"Inter"', '"Segoe UI"', 'Roboto', 'sans-serif'],
+          mono: ['"SF Mono"', '"Fira Code"', 'monospace']
+        }
+      }
+    }
+  }
+</script>
+<style>
+  body {
+    background-color: #0b1120;
+    background-image: 
+      linear-gradient(to bottom, rgba(11,17,32,0.85) 0%, rgba(11,17,32,0.98) 100%),
+      url('https://images.unsplash.com/photo-1519501025264-65ba15a82390?q=80&w=2560&auto=format&fit=crop');
+    background-size: cover; background-position: center; background-attachment: fixed;
+    color: #f1f5f9; overflow-x: hidden;
+  }
+  .desk-surface {
+    position: fixed; bottom: 0; left: 0; right: 0; height: 35vh;
+    background: linear-gradient(to top, #000000 0%, rgba(11,17,32,0.8) 60%, transparent 100%);
+    box-shadow: inset 0 20px 50px rgba(0,0,0,0.5); z-index: -1;
+  }
+  .glass-panel {
+    background: rgba(15, 23, 42, 0.75);
+    backdrop-filter: blur(24px); -webkit-backdrop-filter: blur(24px);
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    box-shadow: 0 10px 30px -5px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.1);
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+  }
+  .monitor-panel {
+    background: rgba(10, 15, 30, 0.85);
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    box-shadow: 0 0 40px rgba(0,0,0,0.8), inset 0 0 20px rgba(0,0,0,0.5), 0 0 20px rgba(250, 204, 21, 0.1);
+  }
+  .monitor-glare {
+    position: absolute; top: 0; left: 0; right: 0; bottom: 0;
+    background: linear-gradient(135deg, rgba(255,255,255,0.06) 0%, transparent 40%, transparent 100%);
+    pointer-events: none; z-index: 20; border-radius: inherit;
+  }
+  .text-glow-gold { text-shadow: 0 0 15px rgba(250, 204, 21, 0.6); }
+  ::-webkit-scrollbar { width: 8px; }
+  ::-webkit-scrollbar-track { background: rgba(0,0,0,0.1); }
+  ::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.2); border-radius: 4px; }
+  ::-webkit-scrollbar-thumb:hover { background: rgba(250, 204, 21, 0.6); }
+  @keyframes softPulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.5; } }
+  .ambient-dot { animation: softPulse 3s infinite ease-in-out; }
+  input { transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1); background: rgba(0,0,0,0.4) !important; color: #ffffff !important; }
+  input:focus { box-shadow: 0 0 0 2px rgba(250, 204, 21, 0.5); border-color: rgba(250, 204, 21, 0.5) !important; outline: none; background: rgba(0,0,0,0.6) !important; }
+  .input-readonly { background: rgba(0,0,0,0.2) !important; color: #cbd5e1 !important; border-color: rgba(255,255,255,0.08) !important; pointer-events: none; }
+  .prob-card:hover { transform: translateX(6px); background: rgba(255,255,255,0.08); }
+  .trend-btn { transition: all 0.25s cubic-bezier(0.16,1,0.3,1); }
+  .trend-btn.active-overall { background: rgba(203,213,225,0.18) !important; border-color: rgba(203,213,225,0.6) !important; color: #f1f5f9 !important; box-shadow: 0 0 14px rgba(203,213,225,0.15); }
+  .trend-btn.active-up      { background: rgba(16,185,129,0.2)  !important; border-color: #10b981 !important; color: #6ee7b7 !important; box-shadow: 0 0 14px rgba(16,185,129,0.2); }
+  .trend-btn.active-down    { background: rgba(239,68,68,0.2)   !important; border-color: #ef4444 !important; color: #fca5a5 !important; box-shadow: 0 0 14px rgba(239,68,68,0.2); }
+  
+  /* Login Overlay Styles */
+  #login-overlay {
+    position: fixed; inset: 0; z-index: 9999;
+    background: rgba(11, 17, 32, 0.95);
+    backdrop-filter: blur(15px); -webkit-backdrop-filter: blur(15px);
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    transition: opacity 0.6s cubic-bezier(0.16, 1, 0.3, 1), visibility 0.6s;
+  }
+  .login-box {
+    background: rgba(15, 23, 42, 0.85);
+    border: 1px solid rgba(250, 204, 21, 0.3);
+    box-shadow: 0 20px 50px rgba(0, 0, 0, 0.8), 0 0 30px rgba(250, 204, 21, 0.1);
+    padding: 40px; border-radius: 24px;
+    text-align: center; max-width: 420px; width: 90%;
+    transform: translateY(0); transition: transform 0.5s;
+  }
+  .login-box.success { transform: scale(1.05); border-color: #10b981; box-shadow: 0 0 40px rgba(16,185,129,0.2); }
+
+  .janie-bubble {
+    position: absolute; top: -10px; right: 90px; transform-origin: right center;
+    background: linear-gradient(135deg,#facc15 0%,#fde68a 100%); color: #0f172a;
+    padding: 10px 16px; border-radius: 16px 16px 4px 16px; font-size: 12px; font-weight: 700;
+    max-width: 250px; min-width: 120px; box-shadow: 0 8px 30px rgba(0,0,0,0.6), 0 0 20px rgba(250,204,21,0.35);
+    z-index: 999; opacity: 0; transform: scale(0.85) translateX(10px); transition: all 0.35s cubic-bezier(0.175,0.885,0.32,1.275);
+    pointer-events: none; line-height: 1.5; font-family: 'Inter', sans-serif; white-space: normal; word-break: break-word;
+  }
+  .janie-bubble.show { opacity: 1; transform: scale(1) translateX(0); }
+  .janie-bubble::after {
+    content: ''; position: absolute; top: 14px; right: -9px; width: 0; height: 0;
+    border-top: 8px solid transparent; border-bottom: 8px solid transparent; border-left: 10px solid #facc15;
+  }
+  .typing-cursor::after { content: '|'; animation: blink 0.8s step-end infinite; color: #92400e; }
+  @keyframes blink { 50% { opacity: 0; } }
+</style>
+</head>
+<body class="min-h-screen flex flex-col p-4 md:p-6 gap-6 max-w-[2400px] mx-auto w-full">
+
+<div id="login-overlay">
+  <div id="login-box" class="login-box">
+    <div class="w-16 h-16 rounded-full border-2 border-gold-400 mx-auto flex items-center justify-center mb-6 shadow-[0_0_15px_#facc15]">
+      <div class="w-4 h-4 bg-gold-400 rounded-full animate-pulse"></div>
+    </div>
+    <h2 class="text-2xl font-light text-white tracking-[0.2em] uppercase mb-2">Alpha <span class="font-bold text-gold-400">Desk</span></h2>
+    <p class="text-[11px] text-slate-400 font-mono mb-8 uppercase tracking-widest border-b border-white/10 pb-4">Restricted Access Protocol</p>
+    
+    <input type="text" id="license-key" placeholder="Enter License Key" autocomplete="off" class="w-full bg-black/60 border border-white/20 rounded-xl px-5 py-4 text-center text-gold-400 font-mono font-bold tracking-widest uppercase mb-4 focus:border-gold-400 focus:ring-1 focus:ring-gold-400 outline-none shadow-inner transition-colors">
+    
+    <button id="login-btn" onclick="verifyLicense()" class="w-full bg-gradient-to-r from-gold-600/30 to-gold-500/10 hover:from-gold-500/40 hover:to-gold-400/20 border border-gold-500/50 text-gold-300 font-bold uppercase tracking-[0.15em] text-sm py-4 rounded-xl transition-all shadow-[0_0_15px_rgba(250,204,21,0.15)] flex justify-center items-center gap-3 group">
+      <svg class="w-4 h-4 group-hover:scale-110 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"></path></svg>
+      <span id="btn-text">Authenticate</span>
+    </button>
+    <p id="login-msg" class="text-xs font-mono mt-5 text-slate-400 h-4"></p>
+  </div>
+</div>
+
+<div class="desk-surface"></div>
+
+<header class="glass-panel rounded-2xl p-5 flex flex-col md:flex-row justify-between items-center gap-6 relative z-10">
+  <div class="flex items-center gap-6">
+    <div class="relative flex items-center justify-center w-14 h-14 rounded-full border-2 border-white/20 bg-black/60 shadow-lg">
+      <div class="w-3.5 h-3.5 bg-gold-400 rounded-full ambient-dot shadow-[0_0_15px_#facc15]"></div>
+    </div>
+    <div>
+      <h1 class="text-2xl md:text-3xl font-light text-white tracking-[0.2em] uppercase">Executive <span class="font-bold text-gold-400 text-glow-gold">Alpha</span> Desk</h1>
+      <div class="text-sm text-slate-300 font-mono tracking-widest mt-2 uppercase flex items-center gap-3 font-semibold">
+        <span class="text-slate-100">AI Assistant: <span class="text-gold-400 font-bold">JANIE</span></span>
+        <span class="w-1.5 h-1.5 rounded-full bg-slate-400"></span>
+        <span id="user-display" class="text-slate-200">Terminal Locked</span>
+      </div>
+    </div>
+  </div>
+  <div class="flex gap-4 w-full md:w-auto">
+    <button id="sync-btn" onclick="triggerSync()" class="flex-1 md:flex-none px-10 py-4 bg-white/10 hover:bg-white/20 border border-white/30 rounded-xl text-white text-sm font-bold tracking-widest uppercase transition-all duration-300 shadow-xl flex items-center justify-center gap-3 group">
+      <svg id="sync-icon" class="w-5 h-5 text-gold-400 group-hover:rotate-180 transition-all duration-700 ease-in-out" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path></svg>
+      <span id="sync-text">Synchronize Database</span>
+    </button>
+  </div>
+</header>
+
+<main class="w-full flex flex-col gap-5 relative z-10">
+  <div class="glass-panel monitor-panel rounded-2xl flex-1 p-2 relative h-[50vh] min-h-[500px] lg:min-h-[600px] flex flex-col overflow-hidden">
+    <div class="monitor-glare"></div>
+    
+    <div class="absolute top-6 left-1/2 -translate-x-1/2 z-20 flex flex-col items-center gap-3 w-auto min-w-[450px] max-w-[95%] pointer-events-auto">
+      <div class="flex gap-2 w-full shadow-2xl">
+        <button id="btn-top-overall" onclick="setTrend('overall')" class="trend-btn active-overall flex-1 py-2.5 px-4 whitespace-nowrap rounded-xl text-xs md:text-sm font-bold uppercase tracking-wider border border-white/20 bg-black/60 text-slate-300 backdrop-blur-md shadow-xl hover:bg-white/10">⚪ Overall</button>
+        <button id="btn-top-up" onclick="setTrend('up')" class="trend-btn flex-1 py-2.5 px-4 whitespace-nowrap rounded-xl text-xs md:text-sm font-bold uppercase tracking-wider border border-emerald-500/25 bg-emerald-900/40 text-emerald-500 backdrop-blur-md shadow-xl hover:bg-emerald-900/60">🟢 Up Trend</button>
+        <button id="btn-top-down" onclick="setTrend('down')" class="trend-btn flex-1 py-2.5 px-4 whitespace-nowrap rounded-xl text-xs md:text-sm font-bold uppercase tracking-wider border border-rose-500/25 bg-rose-900/40 text-rose-500 backdrop-blur-md shadow-xl hover:bg-rose-900/60">🔴 Down Trend</button>
+      </div>
+      <div class="text-[11px] font-bold uppercase tracking-widest bg-black/50 px-5 py-2 rounded-full border border-white/10 backdrop-blur-md shadow-lg text-slate-300 flex items-center gap-2">
+        Today's Gold Futures Trend : <span id="trend-status" class="text-gold-400">Awaiting Auth...</span>
+      </div>
+    </div>
+
+    <div class="absolute top-6 right-6 z-20 flex flex-col items-end gap-1 pointer-events-none w-[220px]">
+      <div class="relative shrink-0 w-20 h-20 pointer-events-auto mr-1" id="janie-wrap">
+        <svg id="janie-svg" viewBox="0 0 100 110" width="80" height="88" xmlns="http://www.w3.org/2000/svg" class="cursor-pointer hover:scale-105 transition-transform drop-shadow-2xl" onclick="janieInteract()">
+          <style>
+            @keyframes serena-type { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-1.5px)} }
+            @keyframes serena-blink { 0%,90%,100%{transform:scaleY(1)} 95%{transform:scaleY(0.05)} }
+            @keyframes serena-bob   { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-2px)} }
+            @keyframes serena-glow  { 0%,100%{opacity:0.6} 50%{opacity:1} }
+            .serena-body  { animation: serena-bob 3s ease-in-out infinite; }
+            .serena-hands { animation: serena-type 0.35s ease-in-out infinite; }
+            .serena-screen-glow { animation: serena-glow 2s ease-in-out infinite; }
+          </style>
+          <rect x="5" y="80" width="90" height="8" rx="3" fill="#1e293b" stroke="#334155" stroke-width="1"/>
+          <rect x="20" y="88" width="8" height="18" rx="2" fill="#0f172a"/>
+          <rect x="72" y="88" width="8" height="18" rx="2" fill="#0f172a"/>
+          <rect x="28" y="50" width="44" height="30" rx="3" fill="#0d1117" stroke="#334155" stroke-width="1.5"/>
+          <rect x="30" y="52" width="40" height="26" rx="2" class="serena-screen-glow" fill="#0ea5e9" opacity="0.15"/>
+          <line x1="32" y1="57" x2="56" y2="57" stroke="#38bdf8" stroke-width="1" opacity="0.6"/>
+          <line x1="32" y1="61" x2="50" y2="61" stroke="#38bdf8" stroke-width="1" opacity="0.4"/>
+          <line x1="32" y1="65" x2="54" y2="65" stroke="#fbbf24" stroke-width="1" opacity="0.5"/>
+          <line x1="32" y1="69" x2="48" y2="69" stroke="#38bdf8" stroke-width="1" opacity="0.3"/>
+          <rect x="46" y="80" width="8" height="4" rx="1" fill="#1e293b"/>
+          <rect x="22" y="78" width="28" height="5" rx="1.5" fill="#1e293b" stroke="#334155" stroke-width="0.8"/>
+          <g class="serena-body">
+            <rect x="34" y="55" width="22" height="22" rx="4" fill="#1e40af" opacity="0"/>
+            <ellipse cx="50" cy="65" rx="11" ry="9" fill="#1d4ed8"/>
+            <polygon points="46,55 50,60 54,55 52,55 50,58 48,55" fill="#1e40af"/>
+            <rect x="47" y="55" width="6" height="10" rx="1" fill="#f8fafc" opacity="0.9"/>
+            <rect x="28" y="63" width="14" height="5" rx="2.5" fill="#1d4ed8" transform="rotate(15 35 65)"/>
+            <rect x="58" y="63" width="14" height="5" rx="2.5" fill="#1d4ed8" transform="rotate(-15 65 65)"/>
+            <g class="serena-hands">
+              <ellipse cx="34" cy="77" rx="4" ry="2.5" fill="#fcd9b8"/>
+              <ellipse cx="44" cy="77" rx="4" ry="2.5" fill="#fcd9b8"/>
+            </g>
+            <rect x="47" y="51" width="6" height="5" rx="2" fill="#fcd9b8"/>
+            <ellipse cx="50" cy="40" rx="13" ry="14" fill="#fcd9b8"/>
+            <ellipse cx="50" cy="29" rx="13" ry="9" fill="#92400e"/>
+            <rect x="37" y="29" width="26" height="10" rx="5" fill="#92400e"/>
+            <ellipse cx="37.5" cy="40" rx="3.5" ry="7" fill="#78350f"/>
+            <ellipse cx="62.5" cy="40" rx="3.5" ry="7" fill="#78350f"/>
+            <g style="animation: serena-blink 4s infinite; transform-origin: 50% 39px;">
+              <ellipse cx="43.5" cy="39" rx="3" ry="3.2" fill="white"/>
+              <ellipse cx="56.5" cy="39" rx="3" ry="3.2" fill="white"/>
+              <circle cx="44" cy="39.5" r="2" fill="#1e293b"/>
+              <circle cx="57" cy="39.5" r="2" fill="#1e293b"/>
+              <circle cx="44.7" cy="38.7" r="0.7" fill="white"/>
+              <circle cx="57.7" cy="38.7" r="0.7" fill="white"/>
+              <path d="M40.5 36.5 Q43.5 34.5 46.5 36.5" stroke="#78350f" stroke-width="1" fill="none"/>
+              <path d="M53.5 36.5 Q56.5 34.5 59.5 36.5" stroke="#78350f" stroke-width="1" fill="none"/>
+            </g>
+            <ellipse cx="50" cy="43" rx="1.5" ry="1" fill="#f0a080"/>
+            <path id="janie-mouth" d="M45.5 47 Q50 51 54.5 47" stroke="#c0785a" stroke-width="1.5" fill="none" stroke-linecap="round"/>
+            <circle cx="37" cy="42" r="1.5" fill="#fbbf24" stroke="#f59e0b" stroke-width="0.5"/>
+            <circle cx="63" cy="42" r="1.5" fill="#fbbf24" stroke="#f59e0b" stroke-width="0.5"/>
+            <path d="M37 33 Q50 22 63 33" stroke="#475569" stroke-width="2" fill="none"/>
+            <rect x="34" y="33" width="5" height="7" rx="2" fill="#334155"/>
+            <rect x="61" y="33" width="5" height="7" rx="2" fill="#334155"/>
+            <path d="M34 38 Q28 42 30 46" stroke="#475569" stroke-width="1.5" fill="none"/>
+            <circle cx="30" cy="46" r="2" fill="#ef4444"/>
+          </g>
+        </svg>
+        <div id="janie-speaking" style="display:none" class="absolute -top-1 -right-1 w-5 h-5 bg-gold-400 rounded-full flex items-center justify-center text-[8px] animate-bounce">💬</div>
+        <div id="janie-bubble" class="janie-bubble"></div>
+      </div>
+      
+      <div id="miniProbCards" class="flex flex-col gap-1.5 backdrop-blur-md bg-black/60 border border-white/10 rounded-xl p-3 shadow-xl pointer-events-auto transition-all w-full z-10">
+         <div class="text-[10px] text-slate-400 font-mono text-center py-2">SYSTEM LOCKED</div>
+      </div>
+    </div>
+
+    <div class="relative w-full h-full flex-1 p-5 pt-20 pb-12">
+      <canvas id="chart"></canvas>
+    </div>
+    <div class="absolute -bottom-1 left-1/2 -translate-x-1/2 w-2/5 h-2 bg-gradient-to-r from-transparent via-white/30 to-transparent blur-[3px]"></div>
+  </div>
+  <div class="glass-panel rounded-2xl p-5 flex flex-wrap gap-5 justify-center items-center shadow-lg" id="pills"></div>
+</main>
+
+<div class="grid grid-cols-1 lg:grid-cols-12 gap-6 w-full relative z-10 mt-2">
+  <aside class="lg:col-span-3 glass-panel rounded-2xl p-7 flex flex-col gap-6 shadow-xl">
+    <h2 class="text-sm font-bold text-slate-100 tracking-[0.15em] uppercase flex items-center gap-3 border-b border-white/10 pb-4">
+      <svg class="w-5 h-5 text-slate-200" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4"></path></svg>
+      Core Parameters
+    </h2>
+    <div class="flex flex-col gap-6 mt-2">
+      <div>
+        <label class="text-xs text-slate-200 uppercase font-bold tracking-widest pl-1 mb-2 block flex justify-between">
+          <span>Target Mode (Center)</span>
+          <span class="text-[9px] text-emerald-400 opacity-80" id="auto-mode-tag" style="display:none;">AUTO-SYNCED</span>
+        </label>
+        <input id="mode" type="text" value="4570.0" oninput="syncMode()" class="w-full border border-white/30 rounded-xl px-5 py-4 font-mono text-lg font-bold shadow-inner focus:ring-2 focus:ring-gold-500/50">
+      </div>
+      <div>
+        <label class="text-xs text-slate-200 uppercase font-bold tracking-widest pl-1 mb-2 block flex justify-between">
+          <span>Current Market Price</span>
+          <span class="text-[9px] text-emerald-400 opacity-80" id="auto-price-tag" style="display:none;">LIVE</span>
+        </label>
+        <input id="current" type="text" placeholder="0.00" oninput="redraw()" class="w-full border border-white/30 rounded-xl px-5 py-4 font-mono text-2xl font-bold shadow-inner focus:ring-2 focus:ring-gold-500/50 placeholder-slate-400">
+      </div>
+      <div>
+        <label class="text-xs text-gold-400 uppercase font-bold tracking-widest pl-1 mb-2 block">Implied Volatility (%)</label>
+        <input id="iv" type="text" placeholder="e.g. 18.5" oninput="redraw()" class="w-full border border-gold-500/60 text-gold-200 rounded-xl px-5 py-4 font-mono text-xl font-bold shadow-inner focus:border-gold-300 focus:ring-2 focus:ring-gold-500/80 placeholder-gold-700">
+      </div>
+    </div>
+  </aside>
+
+  <aside class="lg:col-span-4 glass-panel rounded-2xl flex flex-col overflow-hidden shadow-xl">
+    <div class="p-7 border-b border-white/10 bg-black/40">
+      <h2 class="text-sm font-bold text-slate-100 tracking-[0.15em] uppercase">Volatility Distances</h2>
+    </div>
+    <div class="p-7 flex-1 flex flex-col gap-5 bg-black/20">
+      <div class="grid grid-cols-[55px_1fr_1fr_1fr] gap-3 pb-4 border-b border-white/20 text-xs text-slate-200 font-bold uppercase tracking-[0.1em] text-center">
+        <div class="text-left">Zone</div><div>Left</div><div class="text-gold-400">Width</div><div>Right</div>
+      </div>
+      <div id="sdrows" class="flex flex-col gap-4 mt-2"></div>
+      <div class="mt-auto pt-6 text-sm text-slate-400 font-mono font-medium text-center opacity-90">
+        Auto-scaling enabled for 2SD & 3SD
+      </div>
+    </div>
+  </aside>
+
+  <aside class="lg:col-span-5 glass-panel rounded-2xl flex flex-col overflow-visible relative shadow-xl">
+    <div class="p-5 border-b border-white/10 bg-black/40 flex items-center gap-5 overflow-visible relative">
+      <div class="flex-1 min-w-0">
+        <h2 class="text-sm font-bold text-slate-100 tracking-[0.15em] uppercase">Janie's Probability Matrix</h2>
+        <div class="text-xs text-gold-400 font-mono mt-1 opacity-80">AI Quant Analyst  •  Online</div>
+      </div>
+    </div>
+    
+    <div class="p-7 flex-1 flex flex-col gap-4 bg-black/20">
+      <div class="flex gap-2">
+        <button id="btn-overall" onclick="setTrend('overall')" class="trend-btn active-overall flex-1 py-2.5 px-2 whitespace-nowrap rounded-xl text-[10px] font-bold uppercase tracking-wider border border-white/20 bg-white/8 text-slate-400">⚪ Overall</button>
+        <button id="btn-up" onclick="setTrend('up')" class="trend-btn flex-1 py-2.5 px-2 whitespace-nowrap rounded-xl text-[10px] font-bold uppercase tracking-wider border border-emerald-500/25 bg-emerald-900/15 text-emerald-500">🟢 Up Trend</button>
+        <button id="btn-down" onclick="setTrend('down')" class="trend-btn flex-1 py-2.5 px-2 whitespace-nowrap rounded-xl text-[10px] font-bold uppercase tracking-wider border border-rose-500/25 bg-rose-900/15 text-rose-500">🔴 Down Trend</button>
+      </div>
+      <div class="bg-black/60 rounded-xl border border-white/20 p-5 shadow-inner">
+        <div class="text-sm font-bold text-slate-300 uppercase tracking-widest mb-2">Price Vector Status</div>
+        <div id="probZoneLabel" class="text-xl font-bold text-white font-mono leading-relaxed">System Locked...</div>
+      </div>
+      <div id="probCards" class="flex flex-col gap-4 overflow-y-auto max-h-[380px] pr-2 mt-2 pb-2">
+        <div class="text-center py-16 text-slate-300 text-base font-mono font-bold">
+          <div class="text-5xl mb-4 text-slate-400 opacity-80">⚲</div>AWAITING AUTHENTICATION
+        </div>
+      </div>
+    </div>
+  </aside>
+</div>
+
+<script>
+// ── 🔐 LICENSE VERIFICATION SYSTEM ──
+const API_URL = "https://script.google.com/macros/s/AKfycbzSRUUxVX_Yljl3N0Sj7Bb9zxUxt9uJZJihj78-ZIVKmuG2CUM56C76aSoZw2M6vrvEGg/exec";
+
+// รองรับการกด Enter เพื่อ Login
+document.getElementById("license-key").addEventListener("keyup", function(event) {
+  if (event.key === "Enter") verifyLicense();
+});
+
+async function verifyLicense() {
+  // บังคับตัวพิมพ์ใหญ่ก่อนส่งเสมอ
+  const keyInput = document.getElementById('license-key').value.trim().toUpperCase();
+  const msgEl = document.getElementById('login-msg');
+  const btn = document.getElementById('login-btn');
+  const btnText = document.getElementById('btn-text');
+
+  if (!keyInput) { 
+    msgEl.style.color = '#ef4444'; 
+    msgEl.innerText = "Please enter a License Key."; 
+    return; 
+  }
+
+  // เปลี่ยนสถานะปุ่มเป็นกำลังโหลด
+  msgEl.style.color = '#facc15';
+  msgEl.innerText = "Verifying credentials...";
+  btn.disabled = true;
+  btn.classList.add('opacity-70', 'cursor-not-allowed');
+  btnText.innerText = "Authenticating...";
+
+  try {
+    // 💥 พ่วง Cache Buster ป้องกัน Browser จำค่าเก่า
+    const nocache = new Date().getTime();
+    const response = await fetch(`${API_URL}?key=${encodeURIComponent(keyInput)}&t=${nocache}`);
+    const data = await response.json();
+
+    if (data.status === 'success') {
+      // ✅ ล็อกอินสำเร็จ
+      msgEl.style.color = '#10b981';
+      msgEl.innerText = "Authentication Successful.";
+      document.getElementById('login-box').classList.add('success');
+      document.getElementById('user-display').innerHTML = `User: <span class="text-emerald-400 font-bold">${data.user}</span>`;
+      
+      setTimeout(() => {
+        const overlay = document.getElementById('login-overlay');
+        overlay.style.opacity = '0';
+        overlay.style.visibility = 'hidden';
+        
+        // 🚀 เริ่มโหลดข้อมูลทั้งหมดของระบบเมื่อผ่านประตูเข้ามาได้
+        initAudio();
+        speak(data.message || "Welcome back, Commander.");
+        fetchDataJSONP();
+        fetchGoldFutures();
+      }, 1000);
+
+    } else {
+      // ❌ รหัสผิด หรือหมดอายุ
+      msgEl.style.color = '#ef4444';
+      msgEl.innerText = data.message || "Invalid License Key.";
+      btn.disabled = false;
+      btn.classList.remove('opacity-70', 'cursor-not-allowed');
+      btnText.innerText = "Authenticate";
+    }
+  } catch (error) {
+    msgEl.style.color = '#ef4444';
+    msgEl.innerText = "Connection error. Please try again.";
+    btn.disabled = false;
+    btn.classList.remove('opacity-70', 'cursor-not-allowed');
+    btnText.innerText = "Authenticate";
+  }
+}
+
+// ── AUDIO & UI SYSTEM ──
+let audioCtx = null;
+function initAudio() {
+  if (!audioCtx) { try { audioCtx = new (window.AudioContext || window.webkitAudioContext)(); } catch(e) {} }
+  if (audioCtx && audioCtx.state === 'suspended') audioCtx.resume();
+}
+function playTypeSound() {
+  if (!audioCtx) return;
+  const now = audioCtx.currentTime;
+  const osc1 = audioCtx.createOscillator();
+  const g1 = audioCtx.createGain();
+  osc1.type = 'triangle';
+  osc1.frequency.setValueAtTime(180 + Math.random() * 60, now);
+  osc1.frequency.exponentialRampToValueAtTime(100, now + 0.06);
+  g1.gain.setValueAtTime(0.18, now);
+  g1.gain.exponentialRampToValueAtTime(0.001, now + 0.07);
+  osc1.connect(g1); g1.connect(audioCtx.destination);
+  osc1.start(now); osc1.stop(now + 0.07);
+  const osc2 = audioCtx.createOscillator();
+  const g2 = audioCtx.createGain();
+  osc2.type = 'sine';
+  osc2.frequency.setValueAtTime(1200 + Math.random() * 400, now);
+  osc2.frequency.exponentialRampToValueAtTime(600, now + 0.015);
+  g2.gain.setValueAtTime(0.08, now);
+  g2.gain.exponentialRampToValueAtTime(0.001, now + 0.018);
+  osc2.connect(g2); g2.connect(audioCtx.destination);
+  osc2.start(now); osc2.stop(now + 0.02);
+  const bufSize = audioCtx.sampleRate * 0.02;
+  const buf = audioCtx.createBuffer(1, bufSize, audioCtx.sampleRate);
+  const data = buf.getChannelData(0);
+  for (let i = 0; i < bufSize; i++) data[i] = (Math.random() * 2 - 1) * 0.3;
+  const noise = audioCtx.createBufferSource();
+  noise.buffer = buf;
+  const filter = audioCtx.createBiquadFilter();
+  filter.type = 'bandpass'; filter.frequency.value = 3000; filter.Q.value = 0.8;
+  const g3 = audioCtx.createGain();
+  g3.gain.setValueAtTime(0.06, now);
+  g3.gain.exponentialRampToValueAtTime(0.001, now + 0.015);
+  noise.connect(filter); filter.connect(g3); g3.connect(audioCtx.destination);
+  noise.start(now); noise.stop(now + 0.02);
+  if (Math.random() < 0.10) { setTimeout(() => playTypeSound(), 30 + Math.random() * 20); }
+}
+
+let speakTimeout, typeTimeout, isTyping = false;
+function speak(text) {
+  const b = document.getElementById('janie-bubble');
+  const mouth = document.getElementById('janie-mouth');
+  const indicator = document.getElementById('janie-speaking');
+  clearTimeout(speakTimeout); clearTimeout(typeTimeout); isTyping = true;
+  b.innerHTML = '<span class="typing-cursor"></span>';
+  b.classList.add('show');
+  if (indicator) indicator.style.display = 'flex';
+  if (mouth) mouth.setAttribute('d', 'M45 47 Q50 54 55 47');
+  let i = 0;
+  function typeNext() {
+    if (i >= text.length) {
+      isTyping = false;
+      b.innerHTML = text;
+      if (mouth) mouth.setAttribute('d', 'M45.5 47 Q50 51 54.5 47');
+      if (indicator) indicator.style.display = 'none';
+      speakTimeout = setTimeout(() => b.classList.remove('show'), 5000);
+      return;
+    }
+    b.innerHTML = text.substring(0, i + 1) + '<span class="typing-cursor"></span>';
+    playTypeSound();
+    if (mouth) mouth.setAttribute('d', i % 2 === 0 ? 'M45 47 Q50 54 55 47' : 'M45.5 47 Q50 51 54.5 47');
+    i++;
+    const ch = text[i - 1];
+    const delay = ch === ' ' ? 55 + Math.random() * 40 : ch === ',' ? 90 + Math.random() * 40 : ch === '.' ? 110 + Math.random() * 50 : ch === '!' ? 100 + Math.random() * 40 : ch === '?' ? 100 + Math.random() * 40 : 28 + Math.random() * 35;
+    typeTimeout = setTimeout(typeNext, delay);
+  }
+  typeNext();
+}
+
+function janieInteract() {
+  if(isTyping) return;
+  const q = ["System is optimal, Commander.", "Calculations are fully synchronized.", "Analyzing structural shifts in volume.", "Ready for your next maneuver.", "Keeping an eye on the IV bounds."];
+  speak(q[Math.floor(Math.random()*q.length)]);
+}
+window.addEventListener('click', initAudio, { once: true });
+window.addEventListener('keydown', initAudio, { once: true });
+
+function mapZoneKey(raw) {
+  let L = String(raw).toUpperCase().replace(/\s+/g, ''); L = L.replace('+', ''); 
+  if (L.includes('OVER') || L.includes('IV')) return 'OVER_IV';
+  if (L === 'H-1SD' || L === 'HAFT-1SD' || L === 'HAFT-1') return 'H-1SD';
+  if (L === 'H1SD' || L === 'HAFT1SD' || L === 'HAFT1') return 'H1SD';
+  if (L === 'H-2SD' || L === 'HAFT-2SD' || L === 'HAFT-2') return 'H-2SD';
+  if (L === 'H2SD' || L === 'HAFT2SD' || L === 'HAFT2') return 'H2SD';
+  if (L === 'H-SD' || L === 'HAFT-SD' || L === 'HAFT-' || L === 'H-') return 'H-SD';
+  if (L === 'HSD' || L === 'HAFTSD' || L === 'HAFT') return 'HSD';
+  if (L === '-1SD' || L === '-1') return '-1SD';
+  if (L === '1SD' || L === '1') return '1SD';
+  if (L === '-2SD' || L === '-2') return '-2SD';
+  if (L === '2SD' || L === '2') return '2SD';
+  if (L === '-3SD' || L === '-3') return '-3SD';
+  if (L === '3SD' || L === '3') return '3SD';
+  return raw.trim().toUpperCase(); 
+}
+
+// ── TREND DATA ──
+let PROB_DOWN    = { paths: {}, overIV: null, completeIV: null };
+let PROB_UP      = { paths: {}, overIV: null, completeIV: null };
+let PROB_OVERALL = { paths: {}, overIV: null, completeIV: null };
+let PROB_DATA    = PROB_OVERALL;
+let activeTrend  = 'overall';
+
+function setTrend(t) {
+  activeTrend = t;
+  ['overall','up','down'].forEach(k => {
+    document.getElementById(`btn-${k}`).classList.remove('active-overall','active-up','active-down');
+    let topBtn = document.getElementById(`btn-top-${k}`);
+    if (topBtn) topBtn.classList.remove('active-overall','active-up','active-down');
+  });
+  document.getElementById(`btn-${t}`).classList.add(`active-${t}`);
+  let topActive = document.getElementById(`btn-top-${t}`);
+  if (topActive) topActive.classList.add(`active-${t}`);
+
+  PROB_DATA = t==='up' ? PROB_UP : t==='down' ? PROB_DOWN : PROB_OVERALL;
+  const cur = pv(document.getElementById('current').value);
+  updateProbPanel(cur);
+  if (CHART) CHART.update('none');
+  const msgs = { overall:'Overall data active.', up:'Up Trend mode engaged.', down:'Down Trend mode engaged.' };
+  speak(msgs[t]);
+}
+
+// ── DATA FETCHING (ทำงานหลัง Login ผ่านเท่านั้น) ──
+async function fetchGoldFutures() {
+  document.getElementById('trend-status').innerHTML = '<span class="text-gold-400 animate-pulse">Syncing...</span>';
+  
+  const targetUrl = encodeURIComponent('https://query2.finance.yahoo.com/v8/finance/chart/GC=F?range=5d&interval=1d');
+  let data = null;
+  const proxies = [
+    'https://api.allorigins.win/raw?url=',
+    'https://api.codetabs.com/v1/proxy?quest='
+  ];
+
+  for (let proxy of proxies) {
+    try {
+      const res = await fetch(proxy + targetUrl, { cache: 'no-store' });
+      if (res.ok) {
+        data = await res.json();
+        break; 
+      }
+    } catch (err) {
+      console.log('Proxy failed:', proxy);
+    }
+  }
+
+  if (data && data.chart && data.chart.result && data.chart.result[0]) {
+    const result = data.chart.result[0];
+    const currentPrice = result.meta.regularMarketPrice;
+    const opens = result.indicators.quote[0].open.filter(v => v !== null);
+    
+    if (opens.length >= 2) {
+      const openN = opens[opens.length - 1]; 
+      const openN1 = opens[opens.length - 2]; 
+      applyGoldData(openN, openN1, currentPrice);
+      return;
+    }
+  }
+  document.getElementById('trend-status').innerHTML = '<span class="text-rose-500 hover:text-rose-300 cursor-pointer underline underline-offset-4" onclick="fetchGoldFutures()">API Offline (Click to Retry)</span>';
+  document.getElementById('auto-mode-tag').style.display = 'none';
+  document.getElementById('auto-price-tag').style.display = 'none';
+}
+
+function applyGoldData(openN, openN1, currentPrice) {
+  const diff = openN1 - openN; 
+  const trendEl = document.getElementById('trend-status');
+  if (diff > 0) {
+    trendEl.innerHTML = '<span class="text-rose-500 font-bold drop-shadow-md">🔴 DOWN</span>';
+  } else if (diff < 0) {
+    trendEl.innerHTML = '<span class="text-emerald-500 font-bold drop-shadow-md">🟢 UP</span>';
+  } else {
+    trendEl.innerHTML = '<span class="text-slate-400 font-bold drop-shadow-md">⚪ FLAT</span>';
+  }
+
+  document.getElementById('mode').value = openN.toFixed(1);
+  document.getElementById('auto-mode-tag').style.display = 'inline';
+  document.getElementById('current').value = currentPrice.toFixed(1);
+  document.getElementById('auto-price-tag').style.display = 'inline';
+
+  syncMode(); 
+  redraw();
+}
+
+// ── ฟังก์ชันกดปุ่ม Sync ──
+function triggerSync() {
+  const btn = document.getElementById('sync-btn');
+  const icon = document.getElementById('sync-icon');
+  const text = document.getElementById('sync-text');
+  
+  if(btn) {
+    btn.classList.add('opacity-70', 'cursor-not-allowed');
+    icon.classList.add('animate-spin');
+    text.innerText = "Syncing...";
+  }
+  
+  fetchDataJSONP();
+}
+
+function fetchDataJSONP() {
+  const scriptId = 'google-sheet-fetcher';
+  let oldScript = document.getElementById(scriptId);
+  if (oldScript) oldScript.remove();
+  const script = document.createElement('script');
+  script.id = scriptId;
+  const timestamp = new Date().getTime(); 
+  script.src = `https://docs.google.com/spreadsheets/d/1XX4LSMU3r-QMg2hrXkW4N0BYOosEhjfKxLu4azM87zQ/gviz/tq?gid=1003980349&headers=0&tqx=responseHandler:handleSheetData&_=${timestamp}`;
+  
+  script.onerror = () => {
+    resetSyncButton();
+    speak('Connection to database failed. Verify network access.');
+  };
+  
+  document.body.appendChild(script);
+}
+
+function resetSyncButton() {
+  const btn = document.getElementById('sync-btn');
+  const icon = document.getElementById('sync-icon');
+  const text = document.getElementById('sync-text');
+  if(btn) {
+    btn.classList.remove('opacity-70', 'cursor-not-allowed');
+    icon.classList.remove('animate-spin');
+    text.innerText = "Synchronize Database";
+  }
+}
+
+window.handleSheetData = function(response) {
+  // ยกเลิกแอนิเมชันปุ่มโหลดเมื่อข้อมูลวิ่งกลับมา
+  resetSyncButton();
+
+  try {
+    if (response.status === 'error') { speak('Access Denied. Sheet is private.'); return; }
+    const rows = response.table.rows;
+    if (!rows || rows.length === 0) { speak('No intelligence data found.'); return; }
+    function getCellObj(r,c){ if(!rows[r]||!rows[r].c||!rows[r].c[c]) return null; return rows[r].c[c]; }
+    
+    let LABEL_ROW = 7, rDown = 1, rUp = 3, rOverall = 5;
+    for (let i = 0; i < Math.min(15, rows.length); i++) {
+      if (!rows[i] || !rows[i].c) continue;
+      const rowText = rows[i].c.map(c => c && c.v ? String(c.v).toUpperCase() : '').join('');
+      if (rowText.includes('🔴') || rowText.includes('DOWN')) rDown = i;
+      else if (rowText.includes('🟢') || rowText.includes('UP')) rUp = i;
+      else if (rowText.includes('⚪') || rowText.includes('OVERALL')) rOverall = i;
+      else if (rowText.includes('HSD') && (rowText.includes('DATE') || rowText.includes('TO'))) LABEL_ROW = i;
+    }
+
+    const labelCells = rows[LABEL_ROW]?.c || [];
+    const labels = labelCells.map(c => c?.v?.toString().trim().toUpperCase() || '');
+    const baseCols = {};
+    labels.forEach((lbl, ci) => {
+      const u = lbl.toUpperCase();
+      if (!u.includes(' TO ') && !u.includes('->') && !u.includes('TREND') && !u.includes('OVER') && lbl.trim()) {
+        const key = mapZoneKey(lbl);
+        if (key && !baseCols[key]) baseCols[key] = ci;
+      }
+    });
+
+    function parseSection(pctRow, nRow) {
+      const data = {};
+      let overIV = null, completeIV = null;
+      for (let c = 1; c < labels.length; c++) {
+        const rawLabel = labels[c];
+        if (!rawLabel) continue;
+        const upper = rawLabel.toUpperCase();
+        let pctVal = 0;
+        const cellP = getCellObj(pctRow, c);
+        if (cellP) {
+          const pStr = (cellP.f || cellP.v || '').toString();
+          const pV = cellP.v;
+          if (pStr.includes('%')) pctVal = parseFloat(pStr.replace(/[^0-9.-]/g,'')) || 0;
+          else if (pV !== null && !isNaN(parseFloat(pV))) {
+            const v = parseFloat(pV); pctVal = (v > 0 && v <= 1) ? v*100 : v;
+          } else pctVal = parseFloat(pStr.replace(/[^0-9.-]/g,'')) || 0;
+        }
+        if (isNaN(pctVal)) pctVal = 0;
+
+        let hitCount = 0;
+        const cellN = getCellObj(nRow, c);
+        if (cellN) {
+          const nStr = (cellN.f || cellN.v || '').toString();
+          hitCount = nStr.includes('/') ? parseFloat(nStr.split('/')[0]) || 0 : parseFloat(nStr.replace(/[^0-9.-]/g,'')) || 0;
+        }
+
+        if (upper.includes('COMPLETE IV') || upper.includes('COMPLETEIV') || upper.includes('80%')) {
+          if (!completeIV) completeIV = { pct: pctVal, nStr: `${hitCount}` };
+          continue;
+        }
+        if (upper.includes('OVER IV') || upper.includes('OVERIV')) {
+          if (!overIV) overIV = { pct: pctVal, nStr: `${hitCount}` };
+          continue;
+        }
+
+        const parts = upper.split(/\s+TO\s+|->|ไป/);
+        if (parts.length < 2) continue;
+        const zFrom = mapZoneKey(parts[0].trim()), zTo = mapZoneKey(parts[1].trim());
+        if (!zFrom || !zTo || zTo === 'NEXT ZONE' || zTo === zFrom) continue;
+
+        const baseCol = baseCols[zFrom];
+        let baseCount = 0;
+        if (baseCol !== undefined) {
+          const cellBase = getCellObj(nRow, baseCol);
+          if (cellBase) baseCount = parseFloat((cellBase.f||cellBase.v||'').toString().replace(/[^0-9.-]/g,'')) || 0;
+        }
+        const nDisplay = baseCount > 0 ? `${hitCount}/${baseCount}` : `${hitCount}`;
+        const dir = zFrom.includes('-') ? '-' : '+';
+        const color = pctVal >= 60 ? 'high' : pctVal <= 20 ? 'low' : 'mid';
+
+        if (!data[zFrom]) data[zFrom] = [];
+        data[zFrom].push({ label:rawLabel, from:zFrom, to:zTo, pct:pctVal, n:nDisplay, shortN:nDisplay, dir, color });
+      }
+      return { paths: data, overIV, completeIV };
+    }
+
+    PROB_DOWN    = parseSection(1, 2);
+    PROB_UP      = parseSection(3, 4);
+    PROB_OVERALL = parseSection(5, 6);
+    PROB_DATA = activeTrend==='up' ? PROB_UP : activeTrend==='down' ? PROB_DOWN : PROB_OVERALL;
+
+    const cur = pv(document.getElementById('current').value);
+    updateProbPanel(cur);
+    redraw();
+    
+    // แจ้งเตือนว่าอัปเดตข้อมูลเสร็จแล้ว
+    speak('Database Synchronized, Commander.');
+    
+  } catch(err) { 
+    console.error(err); 
+    speak('Error parsing data. Check console.'); 
+  }
+};
+
+const COLORS = ['#cbd5e1', '#facc15', '#fb7185'];
+const PCTS   = [68.27, 95.45, 99.73];
+const NAMES  = ['1SD','2SD','3SD'];
+let S = { mode: 4570.0, sds: [{d:35.0},{d:70.0},{d:105.0}] };
+
+function sd(i){ return { L: S.mode - S.sds[i].d, R: S.mode + S.sds[i].d }; }
+function pv(s){ return parseFloat((s||'').trim()); }
+
+function syncMode(){
+  const m=pv(document.getElementById('mode').value);
+  if(isNaN(m)) return;
+  S.mode=m; refreshRows(); redraw(); buildPills();
+}
+
+function buildRows(){
+  const c = document.getElementById('sdrows'); c.innerHTML = '';
+  S.sds.forEach((s,i)=>{
+    const L=(S.mode-s.d).toFixed(1), R=(S.mode+s.d).toFixed(1);
+    const div=document.createElement('div'); 
+    div.className='grid grid-cols-[55px_1fr_1fr_1fr] gap-3 items-center bg-black/40 p-3 rounded-xl border border-white/10 shadow-sm';
+    const isReadonly = i > 0 ? "input-readonly readonly" : "";
+    div.innerHTML=`
+      <div class="text-[13px] font-bold text-left pl-1" style="color:${COLORS[i]}">${NAMES[i]}</div>
+      <input type="text" class="w-full border border-white/20 rounded-lg text-center text-slate-300 text-base py-2.5 font-mono font-bold outline-none input-readonly" value="${L}" data-i="${i}" data-t="L" readonly>
+      <input type="text" class="w-full border border-white/30 rounded-lg text-center text-white text-base py-2.5 font-mono font-bold outline-none ${isReadonly}" value="${s.d.toFixed(1)}" data-i="${i}" data-t="D" oninput="onSD(this)">
+      <input type="text" class="w-full border border-white/20 rounded-lg text-center text-slate-300 text-base py-2.5 font-mono font-bold outline-none input-readonly" value="${R}" data-i="${i}" data-t="R" readonly>`;
+    c.appendChild(div);
+  });
+}
+function refreshRows(){
+  document.querySelectorAll('[data-t="L"]').forEach(el=>{const i=+el.dataset.i;el.value=(S.mode-S.sds[i].d).toFixed(1);});
+  document.querySelectorAll('[data-t="D"]').forEach(el=>{const i=+el.dataset.i;el.value=S.sds[i].d.toFixed(1);});
+  document.querySelectorAll('[data-t="R"]').forEach(el=>{const i=+el.dataset.i;el.value=(S.mode+S.sds[i].d).toFixed(1);});
+}
+function onSD(el){
+  const i=+el.dataset.i,v=pv(el.value),t=el.dataset.t;
+  if(isNaN(v) || i > 0) return; 
+  let newD = S.sds[0].d;
+  if(t==='D') newD=Math.abs(v);
+  S.sds[0].d = newD; S.sds[1].d = newD * 2; S.sds[2].d = newD * 3;
+  refreshRows(); redraw(); buildPills();
+}
+function buildPills(){
+  document.getElementById('pills').innerHTML=S.sds.map((s,i)=>{
+    const L=(S.mode-s.d).toFixed(1),R=(S.mode+s.d).toFixed(1);
+    return`<div class="flex items-center gap-3 px-6 py-3.5 bg-black/50 border border-white/20 rounded-full text-sm font-mono font-bold shadow-md hover:bg-black/70 transition-colors"><span style="color:${COLORS[i]}" class="text-base">${NAMES[i]}</span> <span class="text-white mx-1">${L} <span class="text-slate-400 font-sans mx-1">↔</span> ${R}</span> <span style="color:${COLORS[i]};opacity:0.9">${PCTS[i]}%</span></div>`;
+  }).join('');
+}
+
+function pdf(x,u,s){return Math.exp(-.5*((x-u)/s)**2)/(s*Math.sqrt(2*Math.PI));}
+
+// Drag State 
+let isDragging = false;
+let dragPrice  = null;
+let CHART=null;
+
+const PLUGIN={
+  id:'labels',
+  afterDraw(ch){
+    const ctx=ch.ctx,xa=ch.scales.x,ya=ch.scales.y;
+    const lbls=ch.data.labels;
+    const x0=parseFloat(lbls[0]),x1=parseFloat(lbls[lbls.length-1]),xr=x1-x0;
+    const mu=S.mode,sig=S.sds[0].d;
+    function gx(v){return xa.left+(v-x0)/xr*(xa.right-xa.left);}
+    function gy(v){return ya.getPixelForValue(pdf(v,mu,sig));}
+    const yB=ya.bottom,yT=ya.top;
+
+    ctx.save(); ctx.strokeStyle='rgba(255,255,255,0.08)'; ctx.lineWidth=1.5;
+    for(let i=0; i<10; i++){ let yLine = yT + (yB-yT)*(i/10); ctx.beginPath(); ctx.moveTo(xa.left, yLine); ctx.lineTo(xa.right, yLine); ctx.stroke(); }
+    ctx.restore();
+
+    [{v:sd(2).L,lbl:'-3SD',c:COLORS[2]},{v:sd(1).L,lbl:'-2SD',c:COLORS[1]},
+     {v:sd(0).L,lbl:'-1SD',c:COLORS[0]},{v:mu,lbl:'MODE',c:'#cbd5e1'},
+     {v:sd(0).R,lbl:'+1SD',c:COLORS[0]},{v:sd(1).R,lbl:'+2SD',c:COLORS[1]},
+     {v:sd(2).R,lbl:'+3SD',c:COLORS[2]}].forEach(p=>{
+      const x=gx(p.v),y=gy(p.v);
+      ctx.save();ctx.strokeStyle=p.c;ctx.lineWidth=2;
+      ctx.setLineDash([4, 6]); ctx.beginPath();ctx.moveTo(x,y);ctx.lineTo(x,yB);ctx.stroke();ctx.setLineDash([]);
+      ctx.fillStyle=p.c;ctx.beginPath();ctx.arc(x,y,4.5,0,Math.PI*2);ctx.fill();
+      ctx.fillStyle=p.c;ctx.textAlign='center';
+      ctx.font='700 15px "SF Mono", monospace';ctx.fillText(p.v.toFixed(1),x,yB+22);
+      ctx.font='800 13px "Inter", sans-serif';ctx.fillText(p.lbl,x,yB+42);
+      ctx.restore();
+    });
+
+    const halfPoints=[
+      {v:mu+sig*0.5, lbl:'HSD',  c:'rgba(203,213,225,0.8)'}, {v:mu-sig*0.5, lbl:'H-SD', c:'rgba(203,213,225,0.8)'},
+      {v:mu+sig*1.5, lbl:'H1SD', c:'rgba(250,204,21,0.8)'}, {v:mu-sig*1.5, lbl:'H-1SD',c:'rgba(250,204,21,0.8)'},
+      {v:mu+sig*2.5, lbl:'H2SD', c:'rgba(251,113,133,0.8)'}, {v:mu-sig*2.5, lbl:'H-2SD',c:'rgba(251,113,133,0.8)'},
+    ];
+    halfPoints.forEach(p=>{
+      const x=gx(p.v),y=gy(p.v);
+      ctx.save(); ctx.strokeStyle=p.c;ctx.lineWidth=1.5;ctx.setLineDash([2, 6]);
+      ctx.beginPath();ctx.moveTo(x,y);ctx.lineTo(x,yB);ctx.stroke(); ctx.setLineDash([]);
+      ctx.fillStyle=p.c;ctx.textAlign='center';
+      ctx.font='600 13px "SF Mono", monospace';ctx.fillText(p.v.toFixed(1),x,yB+22);
+      ctx.font='700 11px "Inter", sans-serif';ctx.fillText(p.lbl,x,yB+42);
+      ctx.restore();
+    });
+
+    function drawCondArrow(fromX, toX, y, pct, nStr, col){
+      ctx.save(); const dir = toX > fromX ? 1 : -1;
+      const tipX = toX; const shaftEnd = tipX - dir * 12;
+      ctx.strokeStyle = col; ctx.lineWidth = 2.5; ctx.shadowColor = col; ctx.shadowBlur = 6;
+      ctx.beginPath(); ctx.moveTo(fromX, y); ctx.lineTo(shaftEnd, y); ctx.stroke();
+      ctx.fillStyle = col; ctx.beginPath(); ctx.moveTo(tipX, y);
+      ctx.lineTo(tipX - dir*12, y - 6); ctx.lineTo(tipX - dir*12, y + 6);
+      ctx.closePath(); ctx.fill(); ctx.shadowBlur = 0;
+      const bx = (fromX + toX) / 2; const by = y - 28; const txt = pct + '%';
+      ctx.font = '800 14px "Inter", sans-serif'; const tw = ctx.measureText(txt).width + 20;
+      ctx.fillStyle = 'rgba(10,14,26,0.92)'; ctx.strokeStyle = col; ctx.lineWidth = 1.5;
+      ctx.beginPath(); ctx.roundRect(bx - tw/2, by - 14, tw, 26, 5); ctx.fill(); ctx.stroke();
+      ctx.fillStyle = '#fff'; ctx.textAlign = 'center'; ctx.fillText(txt, bx, by + 4);
+      ctx.fillStyle = 'rgba(255,255,255,0.55)'; ctx.font = '600 10px "SF Mono", monospace';
+      ctx.fillText(nStr, bx, by + 20); ctx.restore();
+    }
+
+    const xHSD   = gx(mu + sig*0.5),  x1SD   = gx(mu + sig);
+    const xH1SD  = gx(mu + sig*1.5),  x2SD   = gx(mu + sig*2);
+    const xH2SD  = gx(mu + sig*2.5),  x3SD   = gx(mu + sig*3);
+    const xHnSD  = gx(mu - sig*0.5),  xn1SD  = gx(mu - sig);
+    const xH1nSD = gx(mu - sig*1.5),  xn2SD  = gx(mu - sig*2);
+    const xH2nSD = gx(mu - sig*2.5),  xn3SD  = gx(mu - sig*3);
+
+    const curS=document.getElementById('current').value.trim();
+    let curV = pv(curS);
+    
+    let dynCur = (isDragging && dragPrice !== null) ? dragPrice : curV;
+    let activeZone = null;
+    
+    const ivV=pv(document.getElementById('iv').value);
+    const daily = (!isNaN(ivV)&&ivV>0) ? (ivV/100/16)*mu : 0;
+    const compDist = daily * 0.8;
+
+    if(!isNaN(dynCur) && dynCur > 0) {
+      activeZone = detectZone(dynCur, mu, sig);
+      const px = gx(dynCur);
+      const cy = gy(dynCur);
+      const distFromMu = Math.abs(dynCur - mu);
+      const dir2 = dynCur > mu ? 1 : -1;
+      const outsideDaily = daily > 0 && distFromMu > daily;
+      const outsideComp  = daily > 0 && distFromMu > compDist;
+
+      let state = 'NORMAL';
+      let lineColor = 'rgba(255,255,255,0.9)';
+      let shadowColor = 'rgba(255,255,255,0.4)';
+
+      if (daily > 0) {
+        if (outsideDaily) {
+            state = 'BREAKOUT';
+            lineColor = 'rgba(225,29,72,0.9)'; 
+            shadowColor = 'rgba(225,29,72,0.6)';
+        } else if (outsideComp) {
+            state = 'COMPLETE';
+            lineColor = 'rgba(245,158,11,0.9)'; 
+            shadowColor = 'rgba(245,158,11,0.6)';
+        }
+      }
+
+      ctx.save();
+      ctx.strokeStyle = lineColor;
+      ctx.lineWidth = state === 'BREAKOUT' ? 3 : 2.5;
+      ctx.setLineDash(state === 'BREAKOUT' ? [] : [6, 4]);
+      ctx.shadowColor = shadowColor;
+      ctx.shadowBlur = state === 'BREAKOUT' ? 12 : 8;
+      ctx.beginPath(); ctx.moveTo(px, yT); ctx.lineTo(px, yB); ctx.stroke();
+      ctx.setLineDash([]); ctx.shadowBlur = 0;
+
+      ctx.fillStyle = state === 'NORMAL' ? '#ffffff' : lineColor;
+      ctx.shadowColor = state === 'NORMAL' ? '#fff' : lineColor; 
+      ctx.shadowBlur = 10;
+      ctx.beginPath(); ctx.arc(px, cy, state==='BREAKOUT'?7:6, 0, Math.PI*2); ctx.fill();
+      ctx.shadowBlur = 0;
+
+      const lbl = dynCur.toFixed(1);
+      ctx.font = '800 15px "SF Mono", monospace';
+      const lw = ctx.measureText(lbl).width + 30;
+      ctx.fillStyle = state === 'BREAKOUT' ? 'rgba(225,29,72,0.95)' : state === 'COMPLETE' ? 'rgba(245,158,11,0.95)' : 'rgba(15,23,42,0.95)';
+      ctx.strokeStyle = state === 'NORMAL' ? 'rgba(255,255,255,0.7)' : shadowColor; 
+      ctx.lineWidth = 1.5;
+      ctx.beginPath(); ctx.roundRect(px - lw/2, cy - 46, lw, 30, 6); ctx.fill(); ctx.stroke();
+      ctx.fillStyle = state === 'NORMAL' ? '#ffffff' : (state === 'BREAKOUT' ? '#ffffff' : '#0f172a');
+      ctx.textAlign = 'center'; ctx.fillText(lbl, px, cy - 26);
+
+      if (activeZone && PROB_DATA.paths && PROB_DATA.paths[activeZone]) {
+        const probs = PROB_DATA.paths[activeZone];
+        const zoneX = {
+          'HSD':xHSD,'1SD':x1SD,'H1SD':xH1SD,'2SD':x2SD,'H2SD':xH2SD,'3SD':x3SD,
+          'H-SD':xHnSD,'-1SD':xn1SD,'H-1SD':xH1nSD,'-2SD':xn2SD,'H-2SD':xH2nSD,'-3SD':xn3SD
+        };
+        const valid = probs.filter(p => zoneX[p.to]);
+        const SPACING = 50;
+        
+        valid.forEach((p, idx) => {
+          const fromX  = px; 
+          const toX    = zoneX[p.to];
+          const colStr = p.color==='high'?'#2dd4bf':p.color==='low'?'#fb7185':'#facc15';
+          const pctStr = p.pct%1===0?p.pct.toFixed(0):p.pct.toFixed(1);
+          
+          const fromPrice = mu + (p.dir === '+' ? sig * 0.5 : -sig * 0.5);
+          const curveY = ya.getPixelForValue(pdf(fromPrice, mu, sig) * 0.48);
+          const arrowY = curveY + idx * SPACING;
+          
+          const dirX = toX > fromX ? 1 : -1;
+          drawCondArrow(fromX + (dirX * 5), toX, arrowY, pctStr, p.shortN||p.n, colStr);
+        });
+      }
+
+      if (daily > 0 && distFromMu >= sig * 0.5 && distFromMu <= compDist) {
+        const comp80 = mu + dir2 * compDist;
+        const comp80X = gx(comp80);
+        const arrowRowY = yT + 75; 
+        const aDir = comp80X > px ? 1 : -1;
+        const tipX = comp80X;
+        const shaft = tipX - aDir * 12;
+        const remainVal = Math.abs(compDist - distFromMu).toFixed(1);
+        const arrowCol = 'rgba(245,158,11,0.9)'; 
+
+        const compIvPctStr = (PROB_DATA && PROB_DATA.completeIV) ? PROB_DATA.completeIV.pct.toFixed(0) + '%' : '--%';
+
+        ctx.strokeStyle = arrowCol; ctx.lineWidth = 2.5;
+        ctx.shadowColor = arrowCol; ctx.shadowBlur = 8;
+        ctx.setLineDash([6,4]);
+        ctx.beginPath(); ctx.moveTo(px, arrowRowY); ctx.lineTo(shaft, arrowRowY); ctx.stroke();
+        ctx.setLineDash([]);
+        
+        ctx.fillStyle = arrowCol;
+        ctx.beginPath();
+        ctx.moveTo(tipX, arrowRowY);
+        ctx.lineTo(tipX - aDir*12, arrowRowY - 6);
+        ctx.lineTo(tipX - aDir*12, arrowRowY + 6);
+        ctx.closePath(); ctx.fill();
+        ctx.shadowBlur = 0;
+
+        const midX = (px + comp80X) / 2;
+        const txt = `+${remainVal} pts to 80%  |  Comp IV: ${compIvPctStr}`;
+        ctx.font = '700 11px "Inter", sans-serif';
+        const tw = ctx.measureText(txt).width + 24;
+        
+        ctx.fillStyle = 'rgba(10,12,22,0.92)';
+        ctx.strokeStyle = arrowCol; ctx.lineWidth = 1.5;
+        ctx.beginPath(); ctx.roundRect(midX - tw/2, arrowRowY - 24, tw, 20, 4); ctx.fill(); ctx.stroke();
+        ctx.fillStyle = arrowCol;
+        ctx.textAlign = 'center';
+        ctx.fillText(txt, midX, arrowRowY - 10);
+
+        ctx.fillStyle = arrowCol;
+        ctx.shadowColor = arrowCol; ctx.shadowBlur = 8;
+        ctx.beginPath(); ctx.arc(comp80X, arrowRowY, 4, 0, Math.PI*2); ctx.fill();
+        ctx.shadowBlur = 0;
+      }
+
+      if (outsideDaily) {
+        const boundPrice = mu + dir2 * daily;
+        const boundX = gx(boundPrice);
+        const breakoutDist = distFromMu - daily;
+        const bArrowY = yT + 125; 
+        const bDir = px > boundX ? 1 : -1;
+        const bTipX = px; 
+        const bShaft = bTipX - bDir * 12;
+
+        const overIvPctStr = (PROB_DATA && PROB_DATA.overIV) ? PROB_DATA.overIV.pct.toFixed(0) + '%' : '--%';
+
+        ctx.strokeStyle = 'rgba(225,29,72,1)'; ctx.lineWidth = 2.5;
+        ctx.shadowColor = 'rgba(225,29,72,0.8)'; ctx.shadowBlur = 8;
+        
+        ctx.setLineDash([6, 4]); 
+        ctx.beginPath(); ctx.moveTo(boundX, bArrowY); ctx.lineTo(bShaft, bArrowY); ctx.stroke();
+        ctx.setLineDash([]); 
+
+        ctx.fillStyle = 'rgba(225,29,72,1)';
+        ctx.beginPath();
+        ctx.moveTo(bTipX, bArrowY); 
+        ctx.lineTo(bShaft, bArrowY - 6); 
+        ctx.lineTo(bShaft, bArrowY + 6);
+        ctx.closePath(); ctx.fill();
+        ctx.shadowBlur = 0;
+
+        const bText = `Breakout +${breakoutDist.toFixed(1)} pts  |  Over-IV: ${overIvPctStr}`;
+        ctx.font = '800 11px "Inter", sans-serif';
+        const btw = ctx.measureText(bText).width + 24;
+        const bmx = (boundX + px) / 2;
+        
+        ctx.fillStyle = 'rgba(10,12,22,0.92)';
+        ctx.strokeStyle = 'rgba(225,29,72,0.8)'; ctx.lineWidth = 1.5;
+        ctx.beginPath(); ctx.roundRect(bmx - btw/2, bArrowY - 24, btw, 20, 4); ctx.fill(); ctx.stroke();
+        ctx.fillStyle = '#fca5a5'; ctx.textAlign = 'center';
+        ctx.fillText(bText, bmx, bArrowY - 10);
+      }
+      ctx.restore();
+    }
+
+    if(!isNaN(ivV)&&ivV>0){
+      const daily=(ivV/100/16)*mu, hiV=mu+daily, loV=mu-daily, xM=gx(mu);
+      const compDist=daily*0.8, hiC=mu+compDist, loC=mu-compDist;
+
+      [hiC, loC].forEach(v => {
+        const x = gx(v);
+        ctx.save();
+        ctx.strokeStyle = 'rgba(245, 158, 11, 0.6)'; 
+        ctx.lineWidth = 1.5; ctx.setLineDash([4,4]);
+        ctx.beginPath(); ctx.moveTo(x, yT + 25); ctx.lineTo(x, yB); ctx.stroke();
+        ctx.fillStyle = 'rgba(245, 158, 11, 0.8)';
+        ctx.font = '600 10px "SF Mono", monospace'; ctx.textAlign = 'center';
+        ctx.fillText('80% IV', x, yT + 15);
+        ctx.restore();
+      });
+
+      [hiV,loV].forEach(v=>{
+        const x=gx(v),isHi=v>mu,cy2=gy(v);
+        ctx.save();
+        ctx.fillStyle='rgba(250, 204, 21, 0.05)';
+        ctx.fillRect(Math.min(x,xM),yT,Math.abs(x-xM),yB-yT);
+        ctx.strokeStyle='rgba(250, 204, 21, 0.7)';
+        ctx.lineWidth=2;ctx.setLineDash([5,5]);
+        ctx.beginPath();ctx.moveTo(x,yT);ctx.lineTo(x,yB);ctx.stroke();ctx.setLineDash([]);
+        ctx.fillStyle='rgba(250, 204, 21, 1)';
+        ctx.beginPath();ctx.arc(x,cy2,4.5,0,Math.PI*2);ctx.fill();
+        const lbl2=`${v.toFixed(1)} (${isHi?'+':'-'}${daily.toFixed(1)})`,lw2=ctx.measureText(lbl2).width+24;
+        const labelY = yT + 40; 
+        ctx.fillStyle='rgba(15,23,42,0.95)'; ctx.strokeStyle='rgba(250, 204, 21, 0.6)'; 
+        ctx.lineWidth=2;
+        ctx.beginPath();ctx.roundRect(x-lw2/2,labelY-16,lw2,24,6);ctx.fill(); ctx.stroke();
+        ctx.fillStyle='#facc15';
+        ctx.font='700 12px "SF Mono", monospace';ctx.textAlign='center';ctx.fillText(lbl2,x,labelY + 1);
+        ctx.restore();
+      });
+      
+      ctx.save();
+      ctx.strokeStyle='rgba(250, 204, 21, 0.3)';
+      ctx.lineWidth=2;ctx.setLineDash([3,5]);
+      ctx.beginPath();ctx.moveTo(gx(loV),yT+8);ctx.lineTo(gx(hiV),yT+8);ctx.stroke();ctx.setLineDash([]);
+      ctx.fillStyle='rgba(253, 224, 71, 1)';
+      ctx.font='800 13px "Inter", sans-serif';ctx.textAlign='center';
+      
+      let ivTextParts = [`IV BOUNDARY: ±${daily.toFixed(1)} pts`];
+      if (PROB_DATA && PROB_DATA.completeIV) {
+          ivTextParts.push(`COMPLETE IV: ${PROB_DATA.completeIV.pct.toFixed(0)}%`);
+      }
+      if (PROB_DATA && PROB_DATA.overIV) {
+          ivTextParts.push(`RISK OF OVER-IV: ${PROB_DATA.overIV.pct.toFixed(0)}%`);
+      }
+      ctx.fillText(ivTextParts.join('   |   '),(gx(loV)+gx(hiV))/2,yT+28);
+      ctx.restore();
+    }
+  }
+};
+
+function zonePrice(zoneKey, mu, sig) {
+  const map = {
+    'HSD':   mu + sig * 0.5, 'H1SD':  mu + sig * 1.5, 'H2SD':  mu + sig * 2.5,
+    '1SD':   mu + sig * 1.0, '2SD':   mu + sig * 2.0, '3SD':   mu + sig * 3.0,
+    'H-SD':  mu - sig * 0.5, 'H-1SD': mu - sig * 1.5, 'H-2SD': mu - sig * 2.5,
+    '-1SD':  mu - sig * 1.0, '-2SD':  mu - sig * 2.0, '-3SD':  mu - sig * 3.0, 'MODE':  mu,
+  };
+  return map[zoneKey] !== undefined ? map[zoneKey].toFixed(1) : null;
+}
+
+function detectZone(cur, mu, sig) {
+  const s1 = sig, s2 = sig * 2, s3 = sig * 3;
+  const d = cur - mu, abs = Math.abs(d);
+  if (abs < s1 * 0.5) return null; 
+  if (d > 0) {
+    if (cur >= mu + s3) return '3SD';
+    if (cur >= mu + s1 * 2.5) return 'H2SD';
+    if (cur >= mu + s2) return '2SD';
+    if (cur >= mu + s1 * 1.5) return 'H1SD';
+    if (cur >= mu + s1) return '1SD';
+    if (cur >= mu + s1 * 0.5) return 'HSD';
+  }
+  if (d < 0) {
+    if (cur <= mu - s3) return '-3SD';
+    if (cur <= mu - s1 * 2.5) return 'H-2SD';
+    if (cur <= mu - s2) return '-2SD';
+    if (cur <= mu - s1 * 1.5) return 'H-1SD';
+    if (cur <= mu - s1) return '-1SD';
+    if (cur <= mu - s1 * 0.5) return 'H-SD';
+  }
+  return null;
+}
+
+function updateProbPanel(cur) {
+  const mu  = S.mode, sig = S.sds[0].d;
+  const cardsEl = document.getElementById('probCards');
+  const zoneLabel = document.getElementById('probZoneLabel');
+  
+  let html = ""; 
+  let miniHtml = "";
+
+  if (isNaN(cur) || cur === 0) {
+    zoneLabel.innerHTML = 'Awaiting price vector input.';
+    html = `<div class="text-center py-16 text-slate-300 text-base font-mono font-bold"><div class="text-5xl mb-4 text-slate-400 opacity-80">⚲</div>AWAITING DATA</div>`;
+    miniHtml = `<div class="text-[10px] text-slate-400 font-mono text-center py-2">AWAITING DATA</div>`;
+  } else {
+    const zone = detectZone(cur, mu, sig);
+    if (!zone) {
+      zoneLabel.innerHTML = `<span class="text-white">${cur.toFixed(1)}</span> (Inside Neutral Core)`;
+      html = `<div class="text-center py-16 text-slate-300 text-base font-mono font-bold"><div class="text-5xl mb-4 text-slate-400 opacity-80">⚲</div>PRICE IN NEUTRAL ZONE</div>`;
+      miniHtml = `<div class="text-[10px] text-slate-400 font-mono text-center py-2">NEUTRAL ZONE</div>`;
+    } else {
+      const dir = (cur - mu) > 0 ? '↑' : '↓';
+      zoneLabel.innerHTML = `Vector <span class="text-white">${cur.toFixed(1)}</span> ${dir} Intersects <span class="text-gold-400 font-bold">${zone}</span>`;
+      const probs = (PROB_DATA && PROB_DATA.paths) ? PROB_DATA.paths[zone] : [];
+      if (!probs || probs.length === 0) {
+        html = `<div class="text-center py-16 text-slate-300 text-base font-mono font-bold"><div class="text-5xl mb-4 text-slate-400 opacity-80">∅</div>NO HISTORICAL PRECEDENT</div>`;
+        miniHtml = `<div class="text-[10px] text-slate-400 font-mono text-center py-2">NO HISTORICAL DATA</div>`;
+      } else {
+        let sortedProbs = [...probs].sort((a,b) => b.pct - a.pct);
+        
+        html = sortedProbs.map(p => {
+          const arrowClass = 'text-slate-400';
+          const isHigh = p.pct >= 60, isLow = p.pct <= 20;
+          const cardStyle = isHigh ? 'bg-gradient-to-r from-teal-900/50 to-black/50 border-teal-500/50' : isLow ? 'bg-gradient-to-r from-rose-900/50 to-black/50 border-rose-500/50' : 'bg-black/60 border-white/20';
+          const pctColor = isHigh ? 'text-teal-300' : isLow ? 'text-rose-300' : 'text-gold-300';
+          const pctInt = p.pct % 1 === 0 ? p.pct.toFixed(0) : p.pct.toFixed(1);
+          const priceFrom = zonePrice(p.from, mu, sig), priceTo = zonePrice(p.to, mu, sig);
+          const priceRow  = (priceFrom && priceTo) ? `<div class="flex items-center gap-3 mt-1.5"><span class="text-base font-mono font-bold text-white">${priceFrom}</span><span class="text-slate-400 text-sm">→</span><span class="text-base font-mono font-bold text-white">${priceTo}</span></div>` : '';
+          return `<div class="prob-card flex items-center gap-5 p-5 rounded-2xl border backdrop-blur-md shadow-lg transition-transform ${cardStyle}">
+              <div class="flex flex-col flex-1 gap-1.5">
+                <div class="text-[11px] text-slate-300 uppercase tracking-widest font-bold">Projected Path</div>
+                <div class="text-lg font-bold text-slate-100 flex items-center gap-4"><span class="text-white">${p.from}</span><span class="${arrowClass} text-sm font-mono">→</span><span class="text-white">${p.to}</span></div>
+                ${priceRow}
+              </div>
+              <div class="text-right shrink-0 border-l border-white/20 pl-6">
+                <div class="text-3xl font-bold font-mono ${pctColor}">${pctInt}%</div><div class="text-xs text-slate-300 font-mono mt-1">${p.n}</div>
+              </div>
+            </div>`;
+        }).join('');
+
+        miniHtml = sortedProbs.map(p => {
+          const isHigh = p.pct >= 60, isLow = p.pct <= 20;
+          const pctColor = isHigh ? 'text-teal-400' : isLow ? 'text-rose-400' : 'text-gold-400';
+          const pctInt = p.pct % 1 === 0 ? p.pct.toFixed(0) : p.pct.toFixed(1);
+          return `<div class="flex items-center justify-between bg-black/60 border border-white/10 rounded px-2.5 py-1.5 mb-1 shadow-sm">
+                    <span class="text-[10px] font-bold text-slate-200">${p.from} <span class="text-slate-500 mx-1">→</span> ${p.to}</span>
+                    <span class="text-xs font-mono font-bold ${pctColor}">${pctInt}%</span>
+                  </div>`;
+        }).join('');
+      }
+    }
+  }
+
+  if (PROB_DATA && PROB_DATA.completeIV) {
+    let cPct = PROB_DATA.completeIV.pct;
+    let pctColor = cPct >= 60 ? 'text-orange-400' : cPct <= 20 ? 'text-slate-300' : 'text-gold-400';
+    let cInt = cPct % 1 === 0 ? cPct.toFixed(0) : cPct.toFixed(1);
+    
+    html += `<div class="prob-card flex items-center gap-5 p-5 rounded-2xl border-2 border-orange-500/50 bg-orange-900/20 mt-4 shadow-[0_0_15px_rgba(249,115,22,0.15)]">
+      <div class="flex flex-col flex-1 gap-2">
+        <div class="text-[11px] text-orange-300 font-bold uppercase tracking-[0.2em] drop-shadow-md">Warning</div>
+        <div class="text-sm font-bold text-white tracking-wide">Complete IV (80%)</div>
+      </div>
+      <div class="text-right shrink-0 border-l border-orange-500/40 pl-5">
+        <div class="text-2xl font-bold font-mono ${pctColor}">${cInt}%</div>
+        <div class="text-[10px] text-orange-200 font-mono mt-1">${PROB_DATA.completeIV.nStr}</div>
+      </div>
+    </div>`;
+
+    if (cur !== 0 && !isNaN(cur)) {
+        miniHtml += `<div class="flex items-center justify-between bg-orange-900/40 border border-orange-500/40 rounded px-2.5 py-1.5 mb-1 mt-1.5 shadow-sm">
+                        <span class="text-[10px] font-bold text-orange-200">Comp. IV (80%)</span>
+                        <span class="text-xs font-mono font-bold ${pctColor}">${cInt}%</span>
+                     </div>`;
+    }
+  }
+
+  if (PROB_DATA && PROB_DATA.overIV) {
+    let ovPct = PROB_DATA.overIV.pct;
+    let pctColor = ovPct >= 60 ? 'text-rose-400' : ovPct <= 20 ? 'text-slate-300' : 'text-gold-400';
+    let ovInt = ovPct % 1 === 0 ? ovPct.toFixed(0) : ovPct.toFixed(1);
+    
+    html += `<div class="prob-card flex items-center gap-5 p-6 rounded-2xl border-2 border-rose-500/60 bg-rose-900/30 mt-3 shadow-[0_0_20px_rgba(225,29,72,0.15)]">
+      <div class="flex flex-col flex-1 gap-2.5">
+        <div class="text-xs text-rose-300 font-bold uppercase tracking-[0.2em] drop-shadow-md">Risk Assessment</div>
+        <div class="text-base font-bold text-white tracking-wide">Over-IV Probability</div>
+      </div>
+      <div class="text-right shrink-0 border-l border-rose-500/40 pl-6">
+        <div class="text-3xl font-bold font-mono ${pctColor}">${ovInt}%</div>
+        <div class="text-xs text-rose-200 font-mono mt-1">${PROB_DATA.overIV.nStr}</div>
+      </div>
+    </div>`;
+
+    if (cur !== 0 && !isNaN(cur)) {
+        miniHtml += `<div class="flex items-center justify-between bg-rose-900/40 border border-rose-500/40 rounded px-2.5 py-1.5 mb-1 shadow-sm">
+                        <span class="text-[10px] font-bold text-rose-200">Over-IV</span>
+                        <span class="text-xs font-mono font-bold ${pctColor}">${ovInt}%</span>
+                     </div>`;
+    }
+  }
+
+  cardsEl.innerHTML = html;
+  document.getElementById('miniProbCards').innerHTML = miniHtml;
+}
+
+function redraw(){
+  const iv=pv(document.getElementById('iv').value);
+  const cur=pv(document.getElementById('current').value);
+  
+  updateProbPanel(cur);
+
+  const mu=S.mode,sig=S.sds[0].d,out=S.sds[2].d;
+  const lo=mu-out*1.35,hi=mu+out*1.35,steps=400;
+  const labs=[],vals=[];
+  for(let i=0;i<=steps;i++){const x=lo+(hi-lo)*i/steps;labs.push(x.toFixed(2));vals.push(pdf(x,mu,sig));}
+  const maxY=Math.max(...vals)*1.4;
+
+  function zone(a,b,col){
+    return{data:labs.map(l=>{const x=parseFloat(l);return x>=a&&x<=b?pdf(x,mu,sig):null;}),
+      fill:true,backgroundColor:col,borderColor:'transparent',pointRadius:0,tension:.4,spanGaps:false};
+  }
+  const s1=sd(0),s2=sd(1),s3=sd(2);
+  const DS=[
+    zone(s3.L,s2.L,'rgba(225, 29, 72, 0.08)'),zone(s2.R,s3.R,'rgba(225, 29, 72, 0.08)'),
+    zone(s2.L,s1.L,'rgba(250, 204, 21, 0.08)'),zone(s1.R,s2.R,'rgba(250, 204, 21, 0.08)'),
+    zone(s1.L,s1.R,'rgba(148, 163, 184, 0.1)'),
+    {data:vals,fill:false,borderColor:'rgba(203, 213, 225, 0.8)',borderWidth:2.5,pointRadius:0,tension:.4}
+  ];
+
+  if(CHART){
+    CHART.data.labels=labs; CHART.data.datasets=DS; CHART.options.scales.y.max=maxY; 
+    CHART.update('none'); return;
+  }
+  
+  Chart.defaults.color = '#94a3b8';
+  Chart.defaults.font.family = '"SF Mono", monospace';
+  
+  CHART=new Chart(document.getElementById('chart'),{
+    type:'line',data:{labels:labs,datasets:DS},
+    options:{
+      responsive:true, maintainAspectRatio:false, animation:false,
+      layout:{padding:{bottom:50, top:25}},
+      plugins:{legend:{display:false},tooltip:{enabled:false}},
+      scales:{
+        x:{ticks:{display:false},grid:{display:false},border:{display:false}},
+        y:{display:false,max:maxY,min:0}
+      }
+    },
+    plugins:[PLUGIN]
+  });
+}
+
+buildRows(); buildPills(); redraw();
+
+function pixelToPrice(mouseX) {
+  const xa = CHART.scales.x;
+  const lbls = CHART.data.labels;
+  const x0 = parseFloat(lbls[0]), x1 = parseFloat(lbls[lbls.length - 1]);
+  return x0 + ((mouseX - xa.left) / (xa.right - xa.left)) * (x1 - x0);
+}
+
+function getCanvasMouseX(e) {
+  const rect = document.getElementById('chart').getBoundingClientRect();
+  return (e.touches ? e.touches[0].clientX : e.clientX) - rect.left;
+}
+
+function isOverChart(mouseX) {
+  if (!CHART) return false;
+  const xa = CHART.scales.x;
+  return mouseX >= xa.left && mouseX <= xa.right;
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+  const canvas = document.getElementById('chart');
+
+  function onMoveOrDown(e, isDown) {
+    if (!CHART) return;
+    const mx = getCanvasMouseX(e);
+    const overChart = isOverChart(mx);
+    const curV = pv(document.getElementById('current').value);
+    const hasCurrent = !isNaN(curV) && curV > 0;
+
+    if (isDown) {
+      if (!hasCurrent) { speak("Please set Current Price first, Commander."); return; }
+      if (overChart) {
+        isDragging = true;
+        dragPrice = Math.max(S.mode - S.sds[2].d * 1.3, Math.min(S.mode + S.sds[2].d * 1.3, pixelToPrice(mx)));
+        canvas.style.cursor = 'ew-resize';
+        CHART.update('none'); 
+      }
+    } else if (isDragging) {
+      dragPrice = Math.max(S.mode - S.sds[2].d * 1.3, Math.min(S.mode + S.sds[2].d * 1.3, pixelToPrice(mx)));
+      document.getElementById('current').value = dragPrice.toFixed(1);
+      updateProbPanel(dragPrice); 
+      CHART.update('none');
+    } else {
+      canvas.style.cursor = (hasCurrent && overChart) ? 'ew-resize' : 'default';
+    }
+  }
+
+  function onUp() {
+    if (!isDragging) return;
+    isDragging = false;
+    document.getElementById('chart').style.cursor = 'default';
+    if (dragPrice !== null) {
+      document.getElementById('current').value = dragPrice.toFixed(1);
+      dragPrice = null; redraw();
+      speak(`Target synchronized. Analyzing new trajectory.`);
+    }
+    if (CHART) CHART.update('none');
+  }
+
+  canvas.addEventListener('mousedown', e => onMoveOrDown(e, true));
+  canvas.addEventListener('mousemove', e => onMoveOrDown(e, false));
+  window.addEventListener('mouseup', onUp);
+  canvas.addEventListener('touchstart', e => { e.preventDefault(); onMoveOrDown(e, true); }, { passive: false });
+  canvas.addEventListener('touchmove',  e => { e.preventDefault(); onMoveOrDown(e, false); }, { passive: false });
+  window.addEventListener('touchend', onUp);
+});
+</script>
+</body>
+</html>
