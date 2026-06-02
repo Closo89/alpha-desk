@@ -71,7 +71,7 @@
   .trend-btn.active-up      { background: rgba(16,185,129,0.2)  !important; border-color: #10b981 !important; color: #6ee7b7 !important; box-shadow: 0 0 14px rgba(16,185,129,0.2); }
   .trend-btn.active-down    { background: rgba(239,68,68,0.2)   !important; border-color: #ef4444 !important; color: #fca5a5 !important; box-shadow: 0 0 14px rgba(239,68,68,0.2); }
   
-  /* Login Overlay Styles */
+  /* Login Overlay */
   #login-overlay {
     position: fixed; inset: 0; z-index: 9999;
     background: rgba(11, 17, 32, 0.95);
@@ -89,8 +89,9 @@
   }
   .login-box.success { transform: scale(1.05); border-color: #10b981; box-shadow: 0 0 40px rgba(16,185,129,0.2); }
 
+  /* Janie Bubble ขยับ right ให้พอดีกับกรอบรูปที่กว้างขึ้น */
   .janie-bubble {
-    position: absolute; top: -10px; right: 90px; transform-origin: right center;
+    position: absolute; top: -10px; right: 155px; transform-origin: right center;
     background: linear-gradient(135deg,#facc15 0%,#fde68a 100%); color: #0f172a;
     padding: 10px 16px; border-radius: 16px 16px 4px 16px; font-size: 12px; font-weight: 700;
     max-width: 250px; min-width: 120px; box-shadow: 0 8px 30px rgba(0,0,0,0.6), 0 0 20px rgba(250,204,21,0.35);
@@ -165,72 +166,18 @@
       </div>
     </div>
 
-    <div class="absolute top-6 right-6 z-20 flex flex-col items-end gap-1 pointer-events-none w-[220px]">
-      <div class="relative shrink-0 w-20 h-20 pointer-events-auto mr-1" id="janie-wrap">
-        <svg id="janie-svg" viewBox="0 0 100 110" width="80" height="88" xmlns="http://www.w3.org/2000/svg" class="cursor-pointer hover:scale-105 transition-transform drop-shadow-2xl" onclick="janieInteract()">
-          <style>
-            @keyframes serena-type { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-1.5px)} }
-            @keyframes serena-blink { 0%,90%,100%{transform:scaleY(1)} 95%{transform:scaleY(0.05)} }
-            @keyframes serena-bob   { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-2px)} }
-            @keyframes serena-glow  { 0%,100%{opacity:0.6} 50%{opacity:1} }
-            .serena-body  { animation: serena-bob 3s ease-in-out infinite; }
-            .serena-hands { animation: serena-type 0.35s ease-in-out infinite; }
-            .serena-screen-glow { animation: serena-glow 2s ease-in-out infinite; }
-          </style>
-          <rect x="5" y="80" width="90" height="8" rx="3" fill="#1e293b" stroke="#334155" stroke-width="1"/>
-          <rect x="20" y="88" width="8" height="18" rx="2" fill="#0f172a"/>
-          <rect x="72" y="88" width="8" height="18" rx="2" fill="#0f172a"/>
-          <rect x="28" y="50" width="44" height="30" rx="3" fill="#0d1117" stroke="#334155" stroke-width="1.5"/>
-          <rect x="30" y="52" width="40" height="26" rx="2" class="serena-screen-glow" fill="#0ea5e9" opacity="0.15"/>
-          <line x1="32" y1="57" x2="56" y2="57" stroke="#38bdf8" stroke-width="1" opacity="0.6"/>
-          <line x1="32" y1="61" x2="50" y2="61" stroke="#38bdf8" stroke-width="1" opacity="0.4"/>
-          <line x1="32" y1="65" x2="54" y2="65" stroke="#fbbf24" stroke-width="1" opacity="0.5"/>
-          <line x1="32" y1="69" x2="48" y2="69" stroke="#38bdf8" stroke-width="1" opacity="0.3"/>
-          <rect x="46" y="80" width="8" height="4" rx="1" fill="#1e293b"/>
-          <rect x="22" y="78" width="28" height="5" rx="1.5" fill="#1e293b" stroke="#334155" stroke-width="0.8"/>
-          <g class="serena-body">
-            <rect x="34" y="55" width="22" height="22" rx="4" fill="#1e40af" opacity="0"/>
-            <ellipse cx="50" cy="65" rx="11" ry="9" fill="#1d4ed8"/>
-            <polygon points="46,55 50,60 54,55 52,55 50,58 48,55" fill="#1e40af"/>
-            <rect x="47" y="55" width="6" height="10" rx="1" fill="#f8fafc" opacity="0.9"/>
-            <rect x="28" y="63" width="14" height="5" rx="2.5" fill="#1d4ed8" transform="rotate(15 35 65)"/>
-            <rect x="58" y="63" width="14" height="5" rx="2.5" fill="#1d4ed8" transform="rotate(-15 65 65)"/>
-            <g class="serena-hands">
-              <ellipse cx="34" cy="77" rx="4" ry="2.5" fill="#fcd9b8"/>
-              <ellipse cx="44" cy="77" rx="4" ry="2.5" fill="#fcd9b8"/>
-            </g>
-            <rect x="47" y="51" width="6" height="5" rx="2" fill="#fcd9b8"/>
-            <ellipse cx="50" cy="40" rx="13" ry="14" fill="#fcd9b8"/>
-            <ellipse cx="50" cy="29" rx="13" ry="9" fill="#92400e"/>
-            <rect x="37" y="29" width="26" height="10" rx="5" fill="#92400e"/>
-            <ellipse cx="37.5" cy="40" rx="3.5" ry="7" fill="#78350f"/>
-            <ellipse cx="62.5" cy="40" rx="3.5" ry="7" fill="#78350f"/>
-            <g style="animation: serena-blink 4s infinite; transform-origin: 50% 39px;">
-              <ellipse cx="43.5" cy="39" rx="3" ry="3.2" fill="white"/>
-              <ellipse cx="56.5" cy="39" rx="3" ry="3.2" fill="white"/>
-              <circle cx="44" cy="39.5" r="2" fill="#1e293b"/>
-              <circle cx="57" cy="39.5" r="2" fill="#1e293b"/>
-              <circle cx="44.7" cy="38.7" r="0.7" fill="white"/>
-              <circle cx="57.7" cy="38.7" r="0.7" fill="white"/>
-              <path d="M40.5 36.5 Q43.5 34.5 46.5 36.5" stroke="#78350f" stroke-width="1" fill="none"/>
-              <path d="M53.5 36.5 Q56.5 34.5 59.5 36.5" stroke="#78350f" stroke-width="1" fill="none"/>
-            </g>
-            <ellipse cx="50" cy="43" rx="1.5" ry="1" fill="#f0a080"/>
-            <path id="janie-mouth" d="M45.5 47 Q50 51 54.5 47" stroke="#c0785a" stroke-width="1.5" fill="none" stroke-linecap="round"/>
-            <circle cx="37" cy="42" r="1.5" fill="#fbbf24" stroke="#f59e0b" stroke-width="0.5"/>
-            <circle cx="63" cy="42" r="1.5" fill="#fbbf24" stroke="#f59e0b" stroke-width="0.5"/>
-            <path d="M37 33 Q50 22 63 33" stroke="#475569" stroke-width="2" fill="none"/>
-            <rect x="34" y="33" width="5" height="7" rx="2" fill="#334155"/>
-            <rect x="61" y="33" width="5" height="7" rx="2" fill="#334155"/>
-            <path d="M34 38 Q28 42 30 46" stroke="#475569" stroke-width="1.5" fill="none"/>
-            <circle cx="30" cy="46" r="2" fill="#ef4444"/>
-          </g>
-        </svg>
-        <div id="janie-speaking" style="display:none" class="absolute -top-1 -right-1 w-5 h-5 bg-gold-400 rounded-full flex items-center justify-center text-[8px] animate-bounce">💬</div>
-        <div id="janie-bubble" class="janie-bubble"></div>
+    <div class="absolute top-6 right-6 z-20 flex flex-col items-end gap-1 pointer-events-none w-[260px]">
+      <div class="relative shrink-0 w-36 h-48 pointer-events-auto mr-1" id="janie-wrap">
+        <img id="janie-avatar" 
+             src="split_emotion_05.png" 
+             alt="Janie AI"
+             class="w-full h-full object-contain bg-slate-900/50 rounded-xl border-2 border-white/20 cursor-pointer hover:border-gold-400 transition-all duration-300 shadow-xl p-1" 
+             onclick="janieInteract()">
+        <div id="janie-speaking" style="display:none" class="absolute -top-1 -right-1 w-6 h-6 bg-gold-400 rounded-full flex items-center justify-center text-[10px] animate-bounce shadow-[0_0_10px_#facc15] z-50">💬</div>
+        <div id="janie-bubble" class="janie-bubble z-50"></div>
       </div>
       
-      <div id="miniProbCards" class="flex flex-col gap-1.5 backdrop-blur-md bg-black/60 border border-white/10 rounded-xl p-3 shadow-xl pointer-events-auto transition-all w-full z-10">
+      <div id="miniProbCards" class="flex flex-col gap-1.5 backdrop-blur-md bg-black/60 border border-white/10 rounded-xl p-3 shadow-xl pointer-events-auto transition-all w-full z-10 mt-1">
          <div class="text-[10px] text-slate-400 font-mono text-center py-2">SYSTEM LOCKED</div>
       </div>
     </div>
@@ -317,13 +264,11 @@
 // ── 🔐 LICENSE VERIFICATION SYSTEM ──
 const API_URL = "https://script.google.com/macros/s/AKfycbzSRUUxVX_Yljl3N0Sj7Bb9zxUxt9uJZJihj78-ZIVKmuG2CUM56C76aSoZw2M6vrvEGg/exec";
 
-// รองรับการกด Enter เพื่อ Login
 document.getElementById("license-key").addEventListener("keyup", function(event) {
   if (event.key === "Enter") verifyLicense();
 });
 
 async function verifyLicense() {
-  // บังคับตัวพิมพ์ใหญ่ก่อนส่งเสมอ
   const keyInput = document.getElementById('license-key').value.trim().toUpperCase();
   const msgEl = document.getElementById('login-msg');
   const btn = document.getElementById('login-btn');
@@ -335,7 +280,6 @@ async function verifyLicense() {
     return; 
   }
 
-  // เปลี่ยนสถานะปุ่มเป็นกำลังโหลด
   msgEl.style.color = '#facc15';
   msgEl.innerText = "Verifying credentials...";
   btn.disabled = true;
@@ -343,13 +287,11 @@ async function verifyLicense() {
   btnText.innerText = "Authenticating...";
 
   try {
-    // 💥 พ่วง Cache Buster ป้องกัน Browser จำค่าเก่า
     const nocache = new Date().getTime();
     const response = await fetch(`${API_URL}?key=${encodeURIComponent(keyInput)}&t=${nocache}`);
     const data = await response.json();
 
     if (data.status === 'success') {
-      // ✅ ล็อกอินสำเร็จ
       msgEl.style.color = '#10b981';
       msgEl.innerText = "Authentication Successful.";
       document.getElementById('login-box').classList.add('success');
@@ -360,20 +302,19 @@ async function verifyLicense() {
         overlay.style.opacity = '0';
         overlay.style.visibility = 'hidden';
         
-        // 🚀 เริ่มโหลดข้อมูลทั้งหมดของระบบเมื่อผ่านประตูเข้ามาได้
         initAudio();
-        speak(data.message || "Welcome back, Commander.");
+        speak(data.message || "Welcome back, Commander.", "success");
         fetchDataJSONP();
         fetchGoldFutures();
       }, 1000);
 
     } else {
-      // ❌ รหัสผิด หรือหมดอายุ
       msgEl.style.color = '#ef4444';
       msgEl.innerText = data.message || "Invalid License Key.";
       btn.disabled = false;
       btn.classList.remove('opacity-70', 'cursor-not-allowed');
       btnText.innerText = "Authenticate";
+      speak("Invalid License Key.", "error"); 
     }
   } catch (error) {
     msgEl.style.color = '#ef4444';
@@ -381,6 +322,7 @@ async function verifyLicense() {
     btn.disabled = false;
     btn.classList.remove('opacity-70', 'cursor-not-allowed');
     btnText.innerText = "Authenticate";
+    speak("Connection error.", "error");
   }
 }
 
@@ -427,32 +369,76 @@ function playTypeSound() {
   if (Math.random() < 0.10) { setTimeout(() => playTypeSound(), 30 + Math.random() * 20); }
 }
 
+// ==========================================
+// 🎭 JANIE DYNAMIC AVATAR SYSTEM (NEW SET)
+// ==========================================
+const JANIE_IMG = {
+  normal: 'split_emotion_01.png',
+  success: 'split_emotion_02.png',
+  smile: 'split_emotion_02.png',
+  thinking: 'split_emotion_03.png',
+  warning: 'split_emotion_03.png',
+  error: 'split_emotion_04.png',
+  surprised: 'split_emotion_04.png',
+  idle: 'split_emotion_05.png',
+  serious: 'split_emotion_06.png',
+  explain: 'split_emotion_01.png'
+};
+
+let avatarResetTimer;
+function showJanieEmotion(emotion, duration = 5000) {
+  const avatar = document.getElementById('janie-avatar');
+  if (!avatar) return;
+  
+  const faceImg = JANIE_IMG[emotion] || JANIE_IMG.normal;
+  avatar.src = faceImg;
+  
+  // เพิ่มแสงเรืองรองตอนทำงาน
+  avatar.classList.replace('border-white/20', 'border-gold-400');
+  avatar.classList.add('shadow-[0_0_15px_rgba(250,204,21,0.4)]');
+  
+  clearTimeout(avatarResetTimer);
+  avatarResetTimer = setTimeout(() => {
+    // กลับไปสเตตัสปกติหรือแอบหลับตามตลาด
+    const trendText = document.getElementById('trend-status').innerText;
+    if(trendText.includes('FLAT') || document.getElementById('current').value === '') {
+       avatar.src = JANIE_IMG.idle;
+    } else {
+       avatar.src = JANIE_IMG.normal;
+    }
+    avatar.classList.replace('border-gold-400', 'border-white/20');
+    avatar.classList.remove('shadow-[0_0_15px_rgba(250,204,21,0.4)]');
+  }, duration);
+}
+
 let speakTimeout, typeTimeout, isTyping = false;
-function speak(text) {
+function speak(text, emotion = 'normal') {
   const b = document.getElementById('janie-bubble');
-  const mouth = document.getElementById('janie-mouth');
   const indicator = document.getElementById('janie-speaking');
+  
   clearTimeout(speakTimeout); clearTimeout(typeTimeout); isTyping = true;
+  
+  const readTime = Math.max(3000, text.length * 60);
+  showJanieEmotion(emotion, readTime + 2000);
+
   b.innerHTML = '<span class="typing-cursor"></span>';
   b.classList.add('show');
   if (indicator) indicator.style.display = 'flex';
-  if (mouth) mouth.setAttribute('d', 'M45 47 Q50 54 55 47');
+  
   let i = 0;
   function typeNext() {
     if (i >= text.length) {
       isTyping = false;
       b.innerHTML = text;
-      if (mouth) mouth.setAttribute('d', 'M45.5 47 Q50 51 54.5 47');
       if (indicator) indicator.style.display = 'none';
       speakTimeout = setTimeout(() => b.classList.remove('show'), 5000);
       return;
     }
     b.innerHTML = text.substring(0, i + 1) + '<span class="typing-cursor"></span>';
     playTypeSound();
-    if (mouth) mouth.setAttribute('d', i % 2 === 0 ? 'M45 47 Q50 54 55 47' : 'M45.5 47 Q50 51 54.5 47');
     i++;
     const ch = text[i - 1];
-    const delay = ch === ' ' ? 55 + Math.random() * 40 : ch === ',' ? 90 + Math.random() * 40 : ch === '.' ? 110 + Math.random() * 50 : ch === '!' ? 100 + Math.random() * 40 : ch === '?' ? 100 + Math.random() * 40 : 28 + Math.random() * 35;
+    const delay = ch === ' ' ? 40 : ch === '.' || ch === '?' || ch === '!' ? 120 : 25;
     typeTimeout = setTimeout(typeNext, delay);
   }
   typeNext();
@@ -460,9 +446,17 @@ function speak(text) {
 
 function janieInteract() {
   if(isTyping) return;
-  const q = ["System is optimal, Commander.", "Calculations are fully synchronized.", "Analyzing structural shifts in volume.", "Ready for your next maneuver.", "Keeping an eye on the IV bounds."];
-  speak(q[Math.floor(Math.random()*q.length)]);
+  const responses = [
+    { msg: "System is optimal, Commander. Ready for orders.", emotion: "normal" },
+    { msg: "Standard Deviation Matrix has been fully synchronized.", emotion: "success" },
+    { msg: "Analyzing structural shifts in volume profile...", emotion: "thinking" },
+    { msg: "Warning! IV is expanding rapidly outside normal bounds!", emotion: "warning" },
+    { msg: "Danger zone detected. Proceed with caution, Commander.", emotion: "serious" }
+  ];
+  const r = responses[Math.floor(Math.random() * responses.length)];
+  speak(r.msg, r.emotion);
 }
+
 window.addEventListener('click', initAudio, { once: true });
 window.addEventListener('keydown', initAudio, { once: true });
 
@@ -507,7 +501,7 @@ function setTrend(t) {
   updateProbPanel(cur);
   if (CHART) CHART.update('none');
   const msgs = { overall:'Overall data active.', up:'Up Trend mode engaged.', down:'Down Trend mode engaged.' };
-  speak(msgs[t]);
+  speak(msgs[t], t === 'up' ? 'success' : t === 'down' ? 'serious' : 'normal');
 }
 
 // ── DATA FETCHING (ทำงานหลัง Login ผ่านเท่านั้น) ──
@@ -596,7 +590,7 @@ function fetchDataJSONP() {
   
   script.onerror = () => {
     resetSyncButton();
-    speak('Connection to database failed. Verify network access.');
+    speak('Connection to database failed. Verify network access.', 'error');
   };
   
   document.body.appendChild(script);
@@ -614,13 +608,12 @@ function resetSyncButton() {
 }
 
 window.handleSheetData = function(response) {
-  // ยกเลิกแอนิเมชันปุ่มโหลดเมื่อข้อมูลวิ่งกลับมา
   resetSyncButton();
 
   try {
-    if (response.status === 'error') { speak('Access Denied. Sheet is private.'); return; }
+    if (response.status === 'error') { speak('Access Denied. Sheet is private.', 'error'); return; }
     const rows = response.table.rows;
-    if (!rows || rows.length === 0) { speak('No intelligence data found.'); return; }
+    if (!rows || rows.length === 0) { speak('No intelligence data found.', 'warning'); return; }
     function getCellObj(r,c){ if(!rows[r]||!rows[r].c||!rows[r].c[c]) return null; return rows[r].c[c]; }
     
     let LABEL_ROW = 7, rDown = 1, rUp = 3, rOverall = 5;
@@ -709,12 +702,11 @@ window.handleSheetData = function(response) {
     updateProbPanel(cur);
     redraw();
     
-    // แจ้งเตือนว่าอัปเดตข้อมูลเสร็จแล้ว
-    speak('Database Synchronized, Commander.');
+    speak('Database Synchronized, Commander.', 'success');
     
   } catch(err) { 
     console.error(err); 
-    speak('Error parsing data. Check console.'); 
+    speak('Error parsing data. Check console.', 'error'); 
   }
 };
 
@@ -1290,7 +1282,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const hasCurrent = !isNaN(curV) && curV > 0;
 
     if (isDown) {
-      if (!hasCurrent) { speak("Please set Current Price first, Commander."); return; }
+      if (!hasCurrent) { speak("Please set Current Price first, Commander.", "warning"); return; }
       if (overChart) {
         isDragging = true;
         dragPrice = Math.max(S.mode - S.sds[2].d * 1.3, Math.min(S.mode + S.sds[2].d * 1.3, pixelToPrice(mx)));
@@ -1314,7 +1306,7 @@ document.addEventListener('DOMContentLoaded', () => {
     if (dragPrice !== null) {
       document.getElementById('current').value = dragPrice.toFixed(1);
       dragPrice = null; redraw();
-      speak(`Target synchronized. Analyzing new trajectory.`);
+      speak(`Target synchronized. Analyzing new trajectory.`, "thinking");
     }
     if (CHART) CHART.update('none');
   }
